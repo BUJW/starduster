@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starduster — Pre-Flight Mission Control</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --space:#0a1020;        /* black-blue of space at 100k ft */
+    --space-2:#101a30;
+    --limb:#8fc3e8;         /* atmosphere limb blue */
+    --limb-dim:#5d87a8;
+    --latex:#ede7da;        /* balloon latex cream */
+    --latex-dim:#c9c2b2;
+    --chute:#f2601f;        /* parachute orange */
+    --chute-hover:#ff7433;
+    --panel:#0e1628;
+    --line:#22314f;
+    --ok:#9fd8a3;
+    --warn:#f2b01f;
+    --err:#ff6b6b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--space);
+    color:var(--latex);
+    font-family:'IBM Plex Sans',system-ui,sans-serif;
+    font-size:15px;
+    line-height:1.45;
+  }
+  a{color:var(--limb)}
+
+  header{
+    display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;
+    padding:18px 22px 14px;
+    border-bottom:1px solid var(--line);
+  }
+  .wordmark{
+    font-family:'Barlow Condensed',sans-serif;
+    font-weight:700;font-size:30px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--latex);
+  }
+  .wordmark span{color:var(--chute)}
+  .subtitle{
+    font-family:'Barlow Condensed',sans-serif;font-weight:500;
+    font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim);
+  }
+  .callsign{
+    margin-left:auto;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--latex-dim);
+  }
+  .callsign b{color:var(--limb)}
+
+  .layout{
+    display:grid;
+    grid-template-columns:330px 96px 1fr;
+    gap:0;
+    min-height:calc(100vh - 64px);
+  }
+  @media (max-width:960px){
+    .layout{grid-template-columns:1fr}
+    #gauge-col{display:none}
+  }
+
+  /* ---------- Flight card (inputs) ---------- */
+  .flight-card{
+    border-right:1px solid var(--line);
+    padding:18px 20px 26px;
+    background:var(--panel);
+  }
+  .card-title{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--limb-dim);
+    margin:18px 0 8px;
+    display:flex;align-items:center;gap:8px;
+  }
+  .card-title:first-child{margin-top:0}
+  .card-title::after{content:"";flex:1;height:1px;background:var(--line)}
+  label{
+    display:block;font-size:12.5px;color:var(--latex-dim);margin:10px 0 4px;
+  }
+  input,select{
+    width:100%;
+    background:var(--space);
+    border:1px solid var(--line);
+    border-radius:4px;
+    color:var(--latex);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14px;
+    padding:8px 10px;
+  }
+  input:focus,select:focus,button:focus{
+    outline:2px solid var(--limb);outline-offset:1px;
+  }
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hint{font-size:11.5px;color:var(--limb-dim);margin-top:3px;font-family:'IBM Plex Mono',monospace}
+
+  .mode-toggle{display:flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-top:4px}
+  .mode-toggle button{
+    flex:1;background:var(--space);border:0;color:var(--latex-dim);
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.06em;text-transform:uppercase;padding:8px 4px;cursor:pointer;
+  }
+  .mode-toggle button.active{background:var(--limb);color:var(--space)}
+
+  .run-btn{
+    width:100%;margin-top:22px;
+    background:var(--chute);border:0;border-radius:4px;
+    color:#fff;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;
+    letter-spacing:.14em;text-transform:uppercase;
+    padding:13px;cursor:pointer;
+  }
+  .run-btn:hover{background:var(--chute-hover)}
+  .run-btn:disabled{background:var(--line);color:var(--latex-dim);cursor:wait}
+  .kml-btn{
+    width:100%;margin-top:10px;
+    background:transparent;border:1px solid var(--limb-dim);border-radius:4px;
+    color:var(--limb);
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;
+    letter-spacing:.12em;text-transform:uppercase;
+    padding:10px;cursor:pointer;
+  }
+  .kml-btn:hover{border-color:var(--limb);background:var(--space-2)}
+  .kml-btn:disabled{opacity:.35;cursor:not-allowed}
+  .status{
+    margin-top:12px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+    color:var(--latex-dim);min-height:18px;
+  }
+  .status.err{color:var(--err)}
+  .status.ok{color:var(--ok)}
+
+  /* ---------- Atmosphere gauge (signature) ---------- */
+  #gauge-col{
+    position:relative;
+    border-right:1px solid var(--line);
+    background:linear-gradient(to top,
+      #b8d8ee 0%,      /* ground haze */
+      #7fb4d9 12%,
+      #3d6f9e 30%,     /* tropopause blues */
+      #1c3a63 48%,
+      #0d1e3d 66%,
+      #070d1e 85%,
+      #030510 100%);   /* space */
+  }
+  .gauge-mark{
+    position:absolute;left:0;right:0;
+    border-top:1px dashed rgba(237,231,218,.4);
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;
+    color:rgba(237,231,218,.75);
+    padding:2px 4px 0;
+    line-height:1.25;
+  }
+  .gauge-burst{
+    position:absolute;left:0;right:0;
+    border-top:2px solid var(--chute);
+    transition:bottom .6s ease;
+  }
+  .gauge-burst .tag{
+    position:absolute;top:-20px;left:4px;
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.08em;color:var(--chute);text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .gauge-burst .balloon{
+    position:absolute;top:-13px;right:5px;font-size:15px;
+  }
+  .gauge-base{
+    position:absolute;bottom:4px;left:0;right:0;text-align:center;
+    font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:rgba(10,16,32,.85);
+  }
+
+  /* ---------- Results + map ---------- */
+  .main{display:flex;flex-direction:column}
+  .numbers{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    border-bottom:1px solid var(--line);
+  }
+  .num{
+    padding:14px 16px 12px;border-right:1px solid var(--line);
+  }
+  .num:last-child{border-right:0}
+  .num .lbl{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12.5px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--limb-dim);
+  }
+  .num .val{
+    font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:21px;
+    color:var(--latex);margin-top:2px;
+  }
+  .num .alt{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--limb-dim);
+  }
+  .num.hot .val{color:var(--chute)}
+
+  #map{flex:1;min-height:440px;background:var(--space-2)}
+  .leaflet-container{font-family:'IBM Plex Sans',sans-serif}
+
+  .landing-strip{
+    display:none;
+    border-top:1px solid var(--line);
+    padding:10px 16px;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--latex-dim);
+    background:var(--panel);
+  }
+  .landing-strip b{color:var(--ok)}
+
+  footer{
+    padding:10px 22px 16px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--limb-dim);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .gauge-burst{transition:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Star<span>duster</span></div>
+  <div class="subtitle">Pre-Flight Mission Control</div>
+  <div class="callsign"><b>W3ARD</b> · EM11jn · Waco TX</div>
+</header>
+
+<div class="layout">
+
+  <!-- ============ FLIGHT CARD ============ -->
+  <section class="flight-card" aria-label="Flight card inputs">
+    <div class="card-title">Balloon &amp; Payload</div>
+
+    <label for="balloon">Kaymont balloon</label>
+    <select id="balloon"></select>
+
+    <label for="payload">Payload mass (g)</label>
+    <input id="payload" type="number" value="1500" min="1" step="10">
+    <div class="hint">camera + tracker + chute + rigging</div>
+
+    <label for="gas">Lift gas</label>
+    <select id="gas">
+      <option value="0.1786" selected>Helium</option>
+      <option value="0.0899">Hydrogen</option>
+    </select>
+
+    <div class="card-title">Target</div>
+    <div class="mode-toggle" role="tablist">
+      <button id="mode-ascent" class="active" type="button">Ascent rate</button>
+      <button id="mode-burst" type="button">Burst altitude</button>
+    </div>
+
+    <div id="ascent-input">
+      <label for="target-ascent">Target ascent rate (m/s)</label>
+      <input id="target-ascent" type="number" value="5.0" min="0.5" max="10" step="0.1">
+      <div class="hint">5 m/s is the standard-profile sweet spot</div>
+    </div>
+
+    <div id="burst-input" style="display:none">
+      <label for="target-burst">Target burst altitude (m)</label>
+      <input id="target-burst" type="number" value="30000" min="10000" max="45000" step="500">
+      <div class="hint" id="burst-ft-hint">= 98,425 ft</div>
+    </div>
+
+    <div class="card-title">Launch</div>
+    <div class="row2">
+      <div>
+        <label for="lat">Latitude</label>
+        <input id="lat" type="number" value="31.5514" step="0.0001">
+      </div>
+      <div>
+        <label for="lon">Longitude</label>
+        <input id="lon" type="number" value="-97.1558" step="0.0001">
+      </div>
+    </div>
+    <div class="hint">click the map to move the launch site</div>
+
+    <label for="launch-time">Launch time (your local time)</label>
+    <input id="launch-time" type="datetime-local">
+    <div class="hint">forecast window: now to ~7 days out</div>
+
+    <label for="descent">Descent rate at sea level (m/s)</label>
+    <input id="descent" type="number" value="5.0" min="1" max="15" step="0.5">
+    <div class="hint">set by your parachute</div>
+
+    <button class="run-btn" id="run" type="button">Run prediction</button>
+    <button class="kml-btn" id="kml" type="button" disabled>Download KML for Google Earth</button>
+    <div class="status" id="status">Fill numbers update live. Prediction calls SondeHub Tawhiri.</div>
+  </section>
+
+  <!-- ============ ATMOSPHERE GAUGE ============ -->
+  <div id="gauge-col" aria-hidden="true">
+    <div class="gauge-mark" style="bottom:84%">Kármán-ish<br>150k ft</div>
+    <div class="gauge-mark" style="bottom:42%">Armstrong limit<br>63k ft</div>
+    <div class="gauge-mark" style="bottom:24%">Tropopause<br>36k ft</div>
+    <div class="gauge-mark" style="bottom:8%">Airliners<br>~35k ft</div>
+    <div class="gauge-burst" id="gauge-burst" style="bottom:60%">
+      <div class="tag" id="gauge-tag">Burst</div>
+      <div class="balloon">🎈</div>
+    </div>
+    <div class="gauge-base">WACO · 470 ft MSL</div>
+  </div>
+
+  <!-- ============ RESULTS ============ -->
+  <main class="main">
+    <div class="numbers">
+      <div class="num hot">
+        <div class="lbl">Burst altitude</div>
+        <div class="val" id="out-burst">—</div>
+        <div class="alt" id="out-burst-m">—</div>
+      </div>
+      <div class="num">
+        <div class="lbl">Ascent rate</div>
+        <div class="val" id="out-ascent">—</div>
+        <div class="alt">m/s</div>
+      </div>
+      <div class="num">
+        <div class="lbl">Neck lift</div>
+        <div class="val" id="out-neck">—</div>
+        <div class="alt" id="out-neck-alt">measure at fill</div>
+      </div>
+      <div class="num">
+        <div class="lbl">Fill volume</div>
+        <div class="val" id="out-vol">—</div>
+        <div class="alt" id="out-vol-m3">—</div>
+      </div>
+      <div class="num">
+        <div class="lbl">Time to burst</div>
+        <div class="val" id="out-ttb">—</div>
+        <div class="alt">hh:mm</div>
+      </div>
+      <div class="num">
+        <div class="lbl">Range</div>
+        <div class="val" id="out-range">—</div>
+        <div class="alt" id="out-duration">run a prediction</div>
+      </div>
+    </div>
+
+    <div id="map"></div>
+
+    <div class="landing-strip" id="landing-strip">
+      Predicted landing: <b id="landing-coords">—</b> at <span id="landing-time">—</span>
+      · <a id="landing-gmaps" href="#" target="_blank" rel="noopener">open in Google Maps</a>
+    </div>
+
+    <footer>
+      Physics: CUSF burst calculator model with Kaymont burst data · Trajectory: SondeHub Tawhiri
+      (NOAA GFS winds), non-commercial use · Predictions are estimates — verify before you launch,
+      and mind FAR Part 101.
+    </footer>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+/* =====================================================================
+   Kaymont balloon data — burst diameter (m) and drag coefficient,
+   from the CUSF burst calculator tables (Kaymont Totex sounding data)
+===================================================================== */
+const KAYMONT = {
+  "200":  {burst:3.00,  cd:0.25}, "300":  {burst:3.78,  cd:0.25},
+  "350":  {burst:4.12,  cd:0.25}, "450":  {burst:4.72,  cd:0.25},
+  "500":  {burst:4.99,  cd:0.25}, "600":  {burst:6.02,  cd:0.30},
+  "700":  {burst:6.53,  cd:0.30}, "800":  {burst:7.00,  cd:0.30},
+  "1000": {burst:7.86,  cd:0.30}, "1200": {burst:8.63,  cd:0.25},
+  "1500": {burst:9.44,  cd:0.25}, "2000": {burst:10.54, cd:0.25},
+  "3000": {burst:13.00, cd:0.25}
+};
+const RHO_AIR = 1.2050;      // kg/m3 at sea level
+const G       = 9.80665;     // m/s2
+const ADM     = 7238.3;      // atmospheric scale height used by CUSF (m)
+const M_TO_FT = 3.280840;
+const M3_TO_FT3 = 35.31467;
+
+const $ = id => document.getElementById(id);
+
+/* ---------- populate balloon dropdown, default 1200 g ---------- */
+const sel = $("balloon");
+Object.keys(KAYMONT).forEach(k=>{
+  const o = document.createElement("option");
+  o.value = k; o.textContent = `Kaymont ${k} g  (burst Ø ${KAYMONT[k].burst} m)`;
+  if(k === "1200") o.selected = true;
+  sel.appendChild(o);
+});
+
+/* ---------- default launch time: tomorrow 10:00 local ---------- */
+(function(){
+  const d = new Date(Date.now() + 24*3600*1000);
+  d.setHours(10,0,0,0);
+  const pad = n => String(n).padStart(2,"0");
+  $("launch-time").value =
+    `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+})();
+
+/* =====================================================================
+   Burst-calculator physics (CUSF burst1a model)
+===================================================================== */
+function physicsFromVolume(V, balloonMassG, payloadG, rhoGas, burstDia, cd){
+  const mTot = (balloonMassG + payloadG)/1000;           // kg
+  const r = Math.cbrt(3*V/(4*Math.PI));
+  const area = Math.PI*r*r;
+  const gross = V*(RHO_AIR - rhoGas);                    // kg
+  const free  = gross - mTot;                            // kg
+  if(free <= 0) return null;
+  const ascent = Math.sqrt((free*G)/(0.5*cd*RHO_AIR*area));
+  const Vb = (4/3)*Math.PI*Math.pow(burstDia/2,3);
+  if(V >= Vb) return null;
+  const burstAlt = ADM*Math.log(Vb/V);                   // m
+  const neck = gross - balloonMassG/1000;                // kg, what the scale reads
+  return {V, ascent, burstAlt, neck, gross, free};
+}
+
+function solveForAscent(targetV, balloonMassG, payloadG, rhoGas, burstDia, cd){
+  // bisection on launch volume to hit target ascent rate
+  let lo = 0.01, hi = (4/3)*Math.PI*Math.pow(burstDia/2,3)*0.999;
+  for(let i=0;i<80;i++){
+    const mid = (lo+hi)/2;
+    const p = physicsFromVolume(mid, balloonMassG, payloadG, rhoGas, burstDia, cd);
+    if(!p){ lo = mid; continue; }        // not enough lift yet -> need more gas
+    if(p.ascent < targetV) lo = mid; else hi = mid;
+  }
+  return physicsFromVolume((lo+hi)/2, balloonMassG, payloadG, rhoGas, burstDia, cd);
+}
+
+function solveForBurst(targetAltM, balloonMassG, payloadG, rhoGas, burstDia, cd){
+  const Vb = (4/3)*Math.PI*Math.pow(burstDia/2,3);
+  const V = Vb/Math.exp(targetAltM/ADM);
+  return physicsFromVolume(V, balloonMassG, payloadG, rhoGas, burstDia, cd);
+}
+
+/* ---------- live recalculation ---------- */
+let current = null;   // latest physics result
+let mode = "ascent";
+
+function recalc(){
+  const bKey = sel.value;
+  const b = KAYMONT[bKey];
+  const payload = parseFloat($("payload").value);
+  const rhoGas = parseFloat($("gas").value);
+  const statusEl = $("status");
+
+  if(!(payload > 0)){ current = null; paintNumbers(); return; }
+
+  let p;
+  if(mode === "ascent"){
+    const t = parseFloat($("target-ascent").value);
+    if(!(t > 0)){ current = null; paintNumbers(); return; }
+    p = solveForAscent(t, parseFloat(bKey), payload, rhoGas, b.burst, b.cd);
+  } else {
+    const t = parseFloat($("target-burst").value);
+    if(!(t > 0)){ current = null; paintNumbers(); return; }
+    p = solveForBurst(t, parseFloat(bKey), payload, rhoGas, b.burst, b.cd);
+    $("burst-ft-hint").textContent = "= " + Math.round(t*M_TO_FT).toLocaleString() + " ft";
+  }
+
+  if(!p || !isFinite(p.ascent) || p.ascent < 0.3){
+    current = null; paintNumbers();
+    statusEl.textContent = "This balloon can't fly that payload/target — add lift, cut weight, or pick a bigger balloon.";
+    statusEl.className = "status err";
+    return;
+  }
+  statusEl.textContent = "Fill numbers ready. Run the prediction for the flight path.";
+  statusEl.className = "status";
+  current = p;
+  paintNumbers();
+}
+
+function paintNumbers(){
+  if(!current){
+    ["out-burst","out-ascent","out-neck","out-vol","out-ttb"].forEach(id=>$(id).textContent="—");
+    $("out-burst-m").textContent="—"; $("out-vol-m3").textContent="—";
+    return;
+  }
+  const p = current;
+  $("out-burst").textContent  = Math.round(p.burstAlt*M_TO_FT).toLocaleString()+" ft";
+  $("out-burst-m").textContent= Math.round(p.burstAlt).toLocaleString()+" m";
+  $("out-ascent").textContent = p.ascent.toFixed(2);
+  $("out-neck").textContent   = Math.round(p.neck*1000).toLocaleString()+" g";
+  $("out-neck-alt").textContent = p.neck.toFixed(2)+" kg on the fill scale";
+  $("out-vol").textContent    = (p.V*M3_TO_FT3).toFixed(1)+" ft³";
+  $("out-vol-m3").textContent = p.V.toFixed(2)+" m³ at launch";
+  const ttb = p.burstAlt/p.ascent;
+  const h = Math.floor(ttb/3600), m = Math.round((ttb%3600)/60);
+  $("out-ttb").textContent = `${h}:${String(m).padStart(2,"0")}`;
+
+  // signature gauge: 0 ft -> 0%, 150k ft -> 84%
+  const ft = p.burstAlt*M_TO_FT;
+  const pct = Math.min(84, (ft/150000)*84);
+  $("gauge-burst").style.bottom = pct+"%";
+  $("gauge-tag").textContent = "Burst · "+Math.round(ft/1000)+"k ft";
+}
+
+/* ---------- mode toggle ---------- */
+$("mode-ascent").addEventListener("click",()=>{
+  mode="ascent";
+  $("mode-ascent").classList.add("active"); $("mode-burst").classList.remove("active");
+  $("ascent-input").style.display=""; $("burst-input").style.display="none";
+  recalc();
+});
+$("mode-burst").addEventListener("click",()=>{
+  mode="burst";
+  $("mode-burst").classList.add("active"); $("mode-ascent").classList.remove("active");
+  $("burst-input").style.display=""; $("ascent-input").style.display="none";
+  recalc();
+});
+["balloon","payload","gas","target-ascent","target-burst"].forEach(id=>
+  $(id).addEventListener("input",recalc));
+
+/* =====================================================================
+   Map
+===================================================================== */
+const map = L.map("map").setView([31.5514,-97.1558], 8);
+L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{
+  maxZoom:19, subdomains:"abcd",
+  attribution:'&copy; OpenStreetMap contributors &copy; CARTO'
+}).addTo(map);
+
+let launchMarker = L.marker([31.5514,-97.1558],{draggable:true}).addTo(map)
+  .bindPopup("Launch site");
+launchMarker.on("dragend",()=>{
+  const ll = launchMarker.getLatLng();
+  $("lat").value = ll.lat.toFixed(4); $("lon").value = ll.lng.toFixed(4);
+});
+map.on("click",e=>{
+  launchMarker.setLatLng(e.latlng);
+  $("lat").value = e.latlng.lat.toFixed(4);
+  $("lon").value = e.latlng.lng.toFixed(4);
+});
+["lat","lon"].forEach(id=>$(id).addEventListener("change",()=>{
+  const la=parseFloat($("lat").value), lo=parseFloat($("lon").value);
+  if(isFinite(la)&&isFinite(lo)) launchMarker.setLatLng([la,lo]);
+}));
+
+let pathLayers = [];
+function clearPath(){ pathLayers.forEach(l=>map.removeLayer(l)); pathLayers=[]; }
+
+/* =====================================================================
+   Tawhiri prediction
+===================================================================== */
+let lastPrediction = null;
+
+async function runPrediction(){
+  if(!current){ setStatus("Fix the fill numbers first — the balloon can't fly this setup.","err"); return; }
+  const lat = parseFloat($("lat").value), lon = parseFloat($("lon").value);
+  const descent = parseFloat($("descent").value);
+  const t = new Date($("launch-time").value);
+  if(!isFinite(lat)||!isFinite(lon)||!(descent>0)||isNaN(t.getTime())){
+    setStatus("Check launch site, time, and descent rate.","err"); return;
+  }
+  if(t.getTime() < Date.now()-3600*1000){
+    setStatus("Launch time is in the past — pick a future time within the forecast window.","err"); return;
+  }
+
+  const params = new URLSearchParams({
+    profile:"standard_profile",
+    launch_latitude: lat.toFixed(4),
+    launch_longitude: (((lon%360)+360)%360).toFixed(4),   // Tawhiri wants 0–360
+    launch_altitude: "145",                                // ~Waco MSL in metres; close enough anywhere flat
+    launch_datetime: t.toISOString(),
+    ascent_rate: current.ascent.toFixed(2),
+    burst_altitude: Math.round(current.burstAlt),
+    descent_rate: descent.toFixed(2)
+  });
+
+  const btn = $("run");
+  btn.disabled = true; btn.textContent = "Calling Tawhiri…";
+  setStatus("Requesting trajectory from SondeHub…");
+
+  try{
+    const res = await fetch("https://api.v2.sondehub.org/tawhiri?"+params.toString());
+    if(!res.ok) throw new Error("API returned "+res.status);
+    const data = await res.json();
+    if(!data.prediction) throw new Error(data.error?.description || "No prediction in response");
+    drawPrediction(data);
+    lastPrediction = data;
+    $("kml").disabled = false;
+    setStatus("Prediction complete — "+new Date().toLocaleTimeString(),"ok");
+  }catch(err){
+    setStatus("Couldn't reach Tawhiri: "+err.message+
+      " — if you're viewing this inside a preview pane, download the file and open it directly in your browser.","err");
+  }finally{
+    btn.disabled = false; btn.textContent = "Run prediction";
+  }
+}
+
+function drawPrediction(data){
+  clearPath();
+  const stages = data.prediction;
+  const ascent  = stages.find(s=>s.stage==="ascent");
+  const descent = stages.find(s=>s.stage==="descent");
+  const toLL = p => [p.latitude, ((p.longitude+180)%360)-180];
+
+  if(ascent){
+    pathLayers.push(L.polyline(ascent.trajectory.map(toLL),
+      {color:"#9fd8a3",weight:3}).addTo(map));
+  }
+  if(descent){
+    pathLayers.push(L.polyline(descent.trajectory.map(toLL),
+      {color:"#f2601f",weight:3}).addTo(map));
+  }
+  const burstPt = ascent ? ascent.trajectory[ascent.trajectory.length-1] : null;
+  const landPt  = descent ? descent.trajectory[descent.trajectory.length-1] : null;
+  const startPt = ascent ? ascent.trajectory[0] : null;
+
+  if(burstPt){
+    pathLayers.push(L.circleMarker(toLL(burstPt),{radius:7,color:"#f2601f",fillColor:"#f2601f",fillOpacity:.9})
+      .addTo(map).bindPopup("Burst · "+Math.round(burstPt.altitude*M_TO_FT).toLocaleString()+" ft"));
+  }
+  if(landPt){
+    pathLayers.push(L.marker(toLL(landPt)).addTo(map)
+      .bindPopup("Predicted landing"));
+    const [lla,llo] = toLL(landPt);
+    $("landing-strip").style.display = "block";
+    $("landing-coords").textContent = lla.toFixed(4)+", "+llo.toFixed(4);
+    $("landing-time").textContent = new Date(landPt.datetime).toLocaleString();
+    $("landing-gmaps").href = "https://www.google.com/maps?q="+lla.toFixed(5)+","+llo.toFixed(5);
+
+    if(startPt){
+      const km = haversine(toLL(startPt), toLL(landPt));
+      $("out-range").textContent = (km*0.621371).toFixed(1)+" mi";
+      const dur = (new Date(landPt.datetime)-new Date(startPt.datetime))/60000;
+      $("out-duration").textContent = Math.floor(dur/60)+"h "+Math.round(dur%60)+"m aloft · "+km.toFixed(0)+" km";
+    }
+    const group = L.featureGroup(pathLayers);
+    map.fitBounds(group.getBounds().pad(0.2));
+  }
+}
+
+function haversine([lat1,lon1],[lat2,lon2]){
+  const R=6371, toR=x=>x*Math.PI/180;
+  const dLat=toR(lat2-lat1), dLon=toR(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toR(lat1))*Math.cos(toR(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+
+function setStatus(msg, cls){
+  const s=$("status"); s.textContent=msg; s.className="status"+(cls?" "+cls:"");
+}
+
+$("run").addEventListener("click",runPrediction);
+
+/* =====================================================================
+   KML export
+===================================================================== */
+function buildKML(data){
+  const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;");
+  const stages = data.prediction;
+  const coords = traj => traj.map(p=>{
+    const lon=((p.longitude+180)%360)-180;
+    return lon.toFixed(6)+","+p.latitude.toFixed(6)+","+Math.round(p.altitude);
+  }).join(" ");
+
+  const ascent  = stages.find(s=>s.stage==="ascent");
+  const descent = stages.find(s=>s.stage==="descent");
+  const burstPt = ascent ? ascent.trajectory[ascent.trajectory.length-1] : null;
+  const landPt  = descent ? descent.trajectory[descent.trajectory.length-1] : null;
+  const startPt = ascent ? ascent.trajectory[0] : null;
+  const pm = (name,p) => p ? `
+    <Placemark><name>${esc(name)}</name>
+      <Point><altitudeMode>absolute</altitudeMode>
+      <coordinates>${(((p.longitude+180)%360)-180).toFixed(6)},${p.latitude.toFixed(6)},${Math.round(p.altitude)}</coordinates></Point>
+    </Placemark>` : "";
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>Starduster flight prediction</name>
+  <description>Generated ${new Date().toISOString()} — CUSF/Kaymont physics + SondeHub Tawhiri (NOAA GFS)</description>
+  <Style id="ascent"><LineStyle><color>ffa3d89f</color><width>3</width></LineStyle><PolyStyle><color>4da3d89f</color></PolyStyle></Style>
+  <Style id="descent"><LineStyle><color>ff1f60f2</color><width>3</width></LineStyle><PolyStyle><color>4d1f60f2</color></PolyStyle></Style>
+  ${ascent?`<Placemark><name>Ascent</name><styleUrl>#ascent</styleUrl>
+    <LineString><extrude>1</extrude><altitudeMode>absolute</altitudeMode><tessellate>1</tessellate>
+    <coordinates>${coords(ascent.trajectory)}</coordinates></LineString></Placemark>`:""}
+  ${descent?`<Placemark><name>Descent</name><styleUrl>#descent</styleUrl>
+    <LineString><extrude>1</extrude><altitudeMode>absolute</altitudeMode><tessellate>1</tessellate>
+    <coordinates>${coords(descent.trajectory)}</coordinates></LineString></Placemark>`:""}
+  ${pm("Launch",startPt)}
+  ${pm("Burst — "+(burstPt?Math.round(burstPt.altitude*M_TO_FT).toLocaleString():"")+" ft",burstPt)}
+  ${pm("Predicted landing",landPt)}
+</Document>
+</kml>`;
+}
+
+$("kml").addEventListener("click",()=>{
+  if(!lastPrediction) return;
+  const blob = new Blob([buildKML(lastPrediction)],{type:"application/vnd.google-earth.kml+xml"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "starduster-prediction.kml";
+  a.click();
+  URL.revokeObjectURL(a.href);
+});
+
+/* ---------- first paint ---------- */
+recalc();
+</script>
+</body>
+</html>
