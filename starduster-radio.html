@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starduster — The Radio Side</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --space:#0a1020; --space-2:#101a30; --panel:#0e1628; --line:#22314f;
+    --limb:#8fc3e8; --limb-dim:#5d87a8;
+    --latex:#ede7da; --latex-dim:#c9c2b2;
+    --chute:#f2601f; --ok:#9fd8a3; --warn:#f2b01f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--space);color:var(--latex);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15.5px;line-height:1.6}
+
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .wordmark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:30px;letter-spacing:.12em;text-transform:uppercase}
+  .wordmark span{color:var(--chute)}
+  .subtitle{font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim)}
+
+  .wrap{max-width:880px;margin:0 auto;padding:34px 22px 40px}
+  h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:42px;letter-spacing:.04em;text-transform:uppercase;line-height:1.08}
+  h1 em{font-style:normal;color:var(--limb)}
+  .lede{color:var(--latex-dim);max-width:660px;margin:12px 0 30px}
+
+  h2{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:27px;
+    letter-spacing:.05em;text-transform:uppercase;margin:38px 0 10px;
+    display:flex;align-items:center;gap:12px;
+  }
+  h2 .no{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--chute);letter-spacing:.1em}
+  p{color:var(--latex-dim);margin-bottom:12px;max-width:680px}
+  p b{color:var(--latex)}
+  ul{margin:0 0 12px 18px;max-width:680px}
+  li{color:var(--latex-dim);margin-bottom:6px}
+  li b{color:var(--latex)}
+  .formula{
+    font-family:'IBM Plex Mono',monospace;font-size:15px;color:var(--limb);
+    background:var(--panel);border:1px solid var(--line);border-radius:5px;
+    display:inline-block;padding:5px 12px;margin:2px 0 12px;
+  }
+
+  .diagram{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin:14px 0 20px}
+  .diagram svg{display:block;width:100%;height:auto}
+  text{font-family:'IBM Plex Mono',monospace}
+
+  /* footprint tool */
+  .tool{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:20px;margin:14px 0 8px}
+  .ctl-label{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--limb-dim);
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+  }
+  .ctl-label .readout{font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--latex);letter-spacing:0}
+  input[type=range]{
+    width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;
+    background:linear-gradient(90deg,#7fb4d9,#030510);
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;
+    background:var(--latex);border:3px solid var(--space);cursor:pointer;box-shadow:0 0 0 1px var(--latex-dim);
+  }
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--latex);border:3px solid var(--space);cursor:pointer}
+  input[type=range]:focus-visible{outline:2px solid var(--limb);outline-offset:4px}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:16px}
+  .stat{background:var(--space);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+  .stat .lbl{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim)}
+  .stat .val{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:20px;color:var(--latex);margin-top:2px}
+  .stat .alt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim)}
+  .stat.hot .val{color:var(--chute)}
+  .teaser{
+    border-left:3px solid var(--limb);background:var(--panel);
+    padding:12px 16px;margin:16px 0;max-width:680px;border-radius:0 6px 6px 0;
+    color:var(--latex-dim);font-size:14.5px;
+  }
+  .teaser b{color:var(--limb);font-family:'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+
+  footer{max-width:880px;margin:0 auto;padding:14px 22px 30px;border-top:1px solid var(--line);font-size:12px;color:var(--limb-dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Star<span>duster</span></div>
+  <div class="subtitle">The Radio Side — Why Ham Radio Rides Every Flight</div>
+</header>
+
+<div class="wrap">
+  <h1>At 100,000 feet, a two-watt radio<br>is the <em>tallest tower in North America.</em></h1>
+  <p class="lede">People ask why a balloon hobby needs a ham license. The honest answer: altitude is
+  the most valuable thing in radio, and a balloon buys more of it for $50 than any antenna tower ever
+  built. Here's the why behind the callsigns.</p>
+
+  <h2><span class="no">01</span>Why radio at all?</h2>
+  <p>Your phone quits early — cell antennas point <em>down</em> at people, not up at balloons, and
+  coverage above a few thousand feet is luck at best. Satellite trackers (SPOT and friends) work, and
+  they make a fine backup, but they hand you a position every few minutes with no story in between.</p>
+  <p><b>APRS gives you telemetry.</b> Position, altitude, speed, and whatever sensors you wire in,
+  every minute, received by strangers' stations across the state and piped to a live map anyone can
+  watch. The chase crew, your family at home, and a retired ham in Oklahoma you've never met are all
+  watching the same dot. The radio isn't just tracking — it's the part of the mission other people
+  can participate in. That's the ham radio ethos, and it's why the license is the price of admission.</p>
+
+  <h2><span class="no">02</span>APRS in one paragraph</h2>
+  <p>APRS is a shared national digital channel — <b>144.390 MHz in the US</b> — where stations beacon
+  short data packets. Ground stations called <b>digipeaters</b> rebroadcast weak packets so they travel
+  farther, and <b>iGates</b> bridge everything they hear onto the internet, which is how your balloon
+  shows up on aprs.fi in real time. A car in a valley needs digipeater hops to be heard. Your balloon
+  has the opposite problem — <b>after the first 1,000 feet it's line-of-sight to dozens of iGates
+  simultaneously</b>, and by 30,000 feet, hundreds. Altitude solves propagation completely; the
+  etiquette challenge it creates is covered on the lessons page.</p>
+
+  <h2><span class="no">03</span>The radio footprint — drag the balloon up</h2>
+  <p>VHF and UHF are line-of-sight: your signal reaches everything that can "see" the balloon over
+  the curve of the Earth. The radio horizon grows with the <b>square root</b> of altitude:</p>
+  <span class="formula">d (miles) ≈ 1.41 × √h (feet)</span>
+
+  <div class="tool">
+    <div class="ctl-label">Balloon altitude <span class="readout" id="alt-readout">50,000 ft</span></div>
+    <input type="range" id="alt" min="1000" max="110000" step="1000" value="50000" aria-label="Balloon altitude in feet">
+
+    <div class="diagram" style="margin:16px 0 0;border:0;padding:0;background:transparent">
+      <svg id="fp" viewBox="0 0 840 330" role="img" aria-label="Earth curvature diagram showing the radio footprint growing with balloon altitude"></svg>
+    </div>
+
+    <div class="stats">
+      <div class="stat hot">
+        <div class="lbl">Horizon radius</div>
+        <div class="val" id="s-radius">—</div>
+        <div class="alt">from the sub-balloon point</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Footprint area</div>
+        <div class="val" id="s-area">—</div>
+        <div class="alt" id="s-texas">—</div>
+      </div>
+      <div class="stat">
+        <div class="lbl">Ham-to-ham via balloon</div>
+        <div class="val" id="s-span">—</div>
+        <div class="alt">stations at opposite edges</div>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--limb-dim)">Vertical scale exaggerated so the geometry is visible;
+  the numbers are real (4/3-Earth radio horizon, ground stations at rooftop height).</p>
+
+  <h2><span class="no">04</span>The crossband repeater — a borrowed mountaintop</h2>
+  <p>A repeater listens on one frequency and retransmits on another, so two stations that can't hear
+  each other can both talk through it. Clubs put them on mountains and towers because <b>a repeater
+  is only as good as its view</b>. A balloon at 90,000 feet has a better view than every mountaintop
+  repeater on the continent — for a couple of hours.</p>
+  <p>The non-obvious part is the <b>crossband</b>. A same-band repeater (listen on 2 m, talk on 2 m)
+  has to hear a whisper while shouting on a nearby frequency, which takes bulky cavity duplexers —
+  far too heavy to fly. Listening on <b>70 cm</b> and retransmitting on <b>2 m</b> (or the reverse)
+  separates receive and transmit by hundreds of MHz, so a tiny handheld radio can do the whole job
+  with no duplexer at all. That's why crossband is <em>the</em> balloon repeater architecture:
+  it's the only one that fits in a lunchbox.</p>
+
+  <div class="diagram">
+    <svg viewBox="0 0 840 320" role="img" aria-label="Two distant hams talking through a balloon crossband repeater">
+      <!-- ground curve -->
+      <path d="M 20 300 Q 420 240 820 300" fill="none" stroke="#22314f" stroke-width="2"/>
+      <!-- balloon -->
+      <circle cx="420" cy="70" r="26" fill="none" stroke="#ede7da" stroke-width="2"/>
+      <rect x="408" y="104" width="24" height="18" rx="3" fill="none" stroke="#ede7da" stroke-width="2"/>
+      <line x1="420" y1="96" x2="420" y2="104" stroke="#c9c2b2" stroke-width="2"/>
+      <text x="444" y="80" fill="#c9c2b2" font-size="12">repeater payload</text>
+      <!-- station A -->
+      <path d="M 96 292 l 10 -22 l 10 22 Z" fill="none" stroke="#8fc3e8" stroke-width="2"/>
+      <text x="66" y="312" fill="#8fc3e8" font-size="12">Ham A · Waco</text>
+      <!-- station B -->
+      <path d="M 724 292 l 10 -22 l 10 22 Z" fill="none" stroke="#9fd8a3" stroke-width="2"/>
+      <text x="686" y="312" fill="#9fd8a3" font-size="12">Ham B · El Paso</text>
+      <!-- uplink -->
+      <line x1="112" y1="266" x2="408" y2="116" stroke="#8fc3e8" stroke-width="2" stroke-dasharray="7 5"/>
+      <text x="170" y="176" fill="#8fc3e8" font-size="12" transform="rotate(-27 190 180)">uplink · 70 cm (446 MHz)</text>
+      <!-- downlink -->
+      <line x1="432" y1="116" x2="728" y2="266" stroke="#9fd8a3" stroke-width="2" stroke-dasharray="7 5"/>
+      <text x="500" y="164" fill="#9fd8a3" font-size="12" transform="rotate(27 520 168)">downlink · 2 m (146 MHz)</text>
+      <!-- blocked path -->
+      <path d="M 130 288 Q 420 336 710 288" fill="none" stroke="#ff6b6b" stroke-width="1.6" stroke-dasharray="3 5"/>
+      <text x="352" y="288" fill="#ff6b6b" font-size="11">direct path: blocked by Earth</text>
+    </svg>
+  </div>
+
+  <p><b>The footprint is mutual and it moves.</b> Two stations can only talk if <em>both</em> are
+  inside the balloon's horizon circle at that moment — so the usable repeater coverage grows through
+  the whole ascent, peaks at burst, then collapses on descent faster than people expect. Working a
+  station 600 miles away through a lunchbox at the edge of space, knowing the window is closing, is
+  the whole thrill.</p>
+
+  <div class="teaser"><b>Coming to Mission Control</b> — the live flight map will get a toggleable
+  footprint ring drawn from current APRS altitude, so during a flight you can watch the theoretical
+  coverage grow and shrink in real time, and chase crews know when they're inside the repeater window.</div>
+
+  <h2><span class="no">05</span>Why it answers "why"</h2>
+  <p>Cameras justify the flight to non-hams. Radio justifies it to physics. Every part of this page —
+  the footprint math, the crossband architecture, the etiquette of being the loudest station in four
+  states — is applied RF engineering you can't learn as viscerally any other way. The balloon is a
+  two-hour license upgrade.</p>
+</div>
+
+<footer>
+  Starduster · W3ARD — Radio horizon uses the 4/3-Earth approximation d ≈ 1.41√h; real coverage varies
+  with terrain, antenna pattern, and receiver quality. Operate within your license privileges; ID per
+  Part 97.
+</footer>
+
+<script>
+const R_MI = 3959;                       // earth radius, miles
+const $ = id => document.getElementById(id);
+const horizonMi = hFt => 1.415*Math.sqrt(hFt);
+const TEXAS = 268596;                    // sq mi
+
+function render(){
+  const hFt = parseInt($("alt").value,10);
+  $("alt-readout").textContent = hFt.toLocaleString()+" ft";
+
+  const d = horizonMi(hFt) + horizonMi(20);   // + rooftop-height station
+  const area = Math.PI*d*d;
+  $("s-radius").textContent = Math.round(d).toLocaleString()+" mi";
+  $("s-area").textContent = Math.round(area).toLocaleString()+" mi²";
+  $("s-texas").textContent = (area/TEXAS).toFixed(1)+"× the size of Texas";
+  $("s-span").textContent = Math.round(2*d).toLocaleString()+" mi";
+
+  drawDiagram(hFt);
+}
+
+function drawDiagram(hFt){
+  const svg=$("fp");
+  // stylized geometry: big circle for earth, exaggerated altitude
+  const W=840,H=330;
+  const R=1400;                       // drawing radius of earth
+  const cx=W/2, cy=R+300;             // earth center far below view
+  const hPix = 40 + (hFt/110000)*180; // exaggerated balloon height
+  const bx=cx, by=cy-R-hPix;
+
+  // true horizon angle, exaggerated for visibility
+  const theta = Math.acos(R_MI/(R_MI + hFt/5280));
+  const drawTheta = Math.min(0.55, theta*6);   // exaggeration factor
+
+  const px1=cx-R*Math.sin(drawTheta), py1=cy-R*Math.cos(drawTheta);
+  const px2=cx+R*Math.sin(drawTheta), py2=cy-R*Math.cos(drawTheta);
+
+  let s="";
+  // earth
+  s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#101a30" stroke="#22314f" stroke-width="2"/>`;
+  // footprint arc (highlighted ground)
+  const large=0;
+  s+=`<path d="M ${px1} ${py1} A ${R} ${R} 0 ${large} 1 ${px2} ${py2}"
+       fill="none" stroke="#f2601f" stroke-width="5" stroke-linecap="round"/>`;
+  // tangent sight lines
+  s+=`<line x1="${bx}" y1="${by}" x2="${px1}" y2="${py1}" stroke="#8fc3e8" stroke-width="1.6" stroke-dasharray="6 5"/>`;
+  s+=`<line x1="${bx}" y1="${by}" x2="${px2}" y2="${py2}" stroke="#8fc3e8" stroke-width="1.6" stroke-dasharray="6 5"/>`;
+  // altitude stem
+  s+=`<line x1="${bx}" y1="${by+12}" x2="${bx}" y2="${cy-R}" stroke="#5d87a8" stroke-width="1.4" stroke-dasharray="2 4"/>`;
+  // balloon
+  s+=`<circle cx="${bx}" cy="${by}" r="11" fill="none" stroke="#ede7da" stroke-width="2"/>`;
+  s+=`<rect x="${bx-5}" y="${by+14}" width="10" height="8" rx="2" fill="none" stroke="#ede7da" stroke-width="1.6"/>`;
+  // labels
+  s+=`<text x="${px1-4}" y="${py1-12}" fill="#f2601f" font-size="12" text-anchor="end">radio horizon</text>`;
+  s+=`<text x="${px2+4}" y="${py2-12}" fill="#f2601f" font-size="12">radio horizon</text>`;
+  s+=`<text x="${bx+18}" y="${by+2}" fill="#c9c2b2" font-size="12">${Math.round(hFt/1000)}k ft</text>`;
+  svg.innerHTML=s;
+}
+
+$("alt").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>

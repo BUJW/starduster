@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starduster — Balloon Selector</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --space:#0a1020; --space-2:#101a30; --panel:#0e1628; --line:#22314f;
+    --limb:#8fc3e8; --limb-dim:#5d87a8;
+    --latex:#ede7da; --latex-dim:#c9c2b2;
+    --chute:#f2601f; --ok:#9fd8a3; --err:#ff6b6b;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--space);color:var(--latex);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15px;line-height:1.45}
+
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .wordmark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:30px;letter-spacing:.12em;text-transform:uppercase}
+  .wordmark span{color:var(--chute)}
+  .subtitle{font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim)}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:20px 22px 40px}
+  .intro{color:var(--latex-dim);max-width:760px;margin-bottom:20px;font-size:14.5px}
+  .intro b{color:var(--latex)}
+
+  /* sliders */
+  .controls{
+    display:grid;grid-template-columns:1fr 1fr;gap:26px;
+    background:var(--panel);border:1px solid var(--line);border-radius:6px;
+    padding:18px 20px 20px;margin-bottom:18px;
+  }
+  @media(max-width:760px){.controls{grid-template-columns:1fr}}
+  .ctl-label{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:14px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--limb-dim);
+    display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;
+  }
+  .ctl-label .readout{font-family:'IBM Plex Mono',monospace;font-size:17px;color:var(--latex);letter-spacing:0;text-transform:none}
+  input[type=range]{
+    width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:3px;
+    background:linear-gradient(90deg,var(--limb-dim),var(--chute));outline-offset:4px;
+  }
+  input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;
+    background:var(--latex);border:3px solid var(--space);cursor:pointer;box-shadow:0 0 0 1px var(--latex-dim);
+  }
+  input[type=range]::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--latex);border:3px solid var(--space);cursor:pointer;
+  }
+  .ends{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim);margin-top:5px}
+
+  /* chart */
+  .chart-box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 8px 6px;margin-bottom:8px}
+  svg{display:block;width:100%;height:auto}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;padding:8px 12px 14px}
+  .chip{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;
+    border:1px solid var(--line);border-radius:999px;padding:4px 12px;cursor:pointer;
+    background:var(--space);color:var(--latex-dim);display:flex;align-items:center;gap:7px;
+  }
+  .chip .dot{width:9px;height:9px;border-radius:50%}
+  .chip.active{border-color:var(--latex);color:var(--latex)}
+  .chip.dead{opacity:.3;cursor:default}
+  .chip:focus-visible{outline:2px solid var(--limb)}
+
+  /* readout table */
+  .table-title{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:15px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--limb-dim);margin:22px 0 8px;
+  }
+  table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:13px}
+  th{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12.5px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim);
+    text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);
+  }
+  th:first-child,td:first-child{text-align:left}
+  td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);color:var(--latex-dim)}
+  tr.best td{color:var(--latex);background:var(--space-2)}
+  tr.best td:first-child{color:var(--chute);font-weight:600}
+  td .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:7px;vertical-align:1px}
+
+  footer{max-width:1180px;margin:0 auto;padding:0 22px 24px;font-size:11.5px;color:var(--limb-dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Star<span>duster</span></div>
+  <div class="subtitle">Balloon Selector — Performance Envelopes</div>
+</header>
+
+<div class="wrap">
+  <p class="intro">
+    Every Kaymont balloon is a curve, not a number. Fill it light and it climbs slowly but bursts high;
+    fill it heavy and it gets up and down fast at the cost of altitude. Set your <b>payload weight</b>,
+    then slide your <b>mission goal</b> between chasing altitude and getting your payload back quickly —
+    the markers show where each balloon lands on its own envelope.
+  </p>
+
+  <div class="controls">
+    <div>
+      <div class="ctl-label">Payload weight <span class="readout" id="payload-readout">1,500 g</span></div>
+      <input type="range" id="payload" min="100" max="3000" step="25" value="1500" aria-label="Payload weight in grams">
+      <div class="ends"><span>100 g · pico</span><span>3,000 g · heavy rig</span></div>
+    </div>
+    <div>
+      <div class="ctl-label">Mission goal <span class="readout" id="goal-readout">balanced · 5.0 m/s</span></div>
+      <input type="range" id="goal" min="0" max="100" step="1" value="40" aria-label="Mission goal from maximum altitude to fast recovery">
+      <div class="ends"><span>◀ Max altitude</span><span>Fast recovery ▶</span></div>
+    </div>
+  </div>
+
+  <div class="chart-box">
+    <svg id="chart" viewBox="0 0 900 520" role="img" aria-label="Performance envelope chart: ascent rate versus burst altitude for each balloon size"></svg>
+    <div class="legend" id="legend"></div>
+  </div>
+
+  <div class="table-title">At this goal — what each balloon gives you</div>
+  <table>
+    <thead>
+      <tr><th>Balloon</th><th>Burst alt</th><th>Total flight</th><th>Neck lift</th><th>Helium fill</th></tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<footer>
+  Physics: CUSF burst model with Kaymont Totex burst data. Curves assume helium and a 5 m/s sea-level
+  descent under parachute. Ascent rates below ~4 m/s (shaded) risk a floater — the balloon may reach
+  a neutral-buoyancy altitude and never burst. Estimates only; fly at your own risk.
+</footer>
+
+<script>
+/* ---------------- physics (same CUSF model as the pre-flight tool) ---------------- */
+const KAYMONT = {
+  "200":{burst:3.00,cd:0.25},"300":{burst:3.78,cd:0.25},"350":{burst:4.12,cd:0.25},
+  "450":{burst:4.72,cd:0.25},"500":{burst:4.99,cd:0.25},"600":{burst:6.02,cd:0.30},
+  "700":{burst:6.53,cd:0.30},"800":{burst:7.00,cd:0.30},"1000":{burst:7.86,cd:0.30},
+  "1200":{burst:8.63,cd:0.25},"1500":{burst:9.44,cd:0.25},"2000":{burst:10.54,cd:0.25},
+  "3000":{burst:13.00,cd:0.25}
+};
+const RHO_AIR=1.2050, RHO_HE=0.1786, G=9.80665, ADM=7238.3;
+const M_TO_FT=3.280840, M3_TO_FT3=35.31467, DESCENT_SL=5.0;
+
+function physicsFromVolume(V,balloonG,payloadG,burstDia,cd){
+  const mTot=(balloonG+payloadG)/1000;
+  const r=Math.cbrt(3*V/(4*Math.PI)), area=Math.PI*r*r;
+  const gross=V*(RHO_AIR-RHO_HE), free=gross-mTot;
+  if(free<=0) return null;
+  const Vb=(4/3)*Math.PI*Math.pow(burstDia/2,3);
+  if(V>=Vb) return null;
+  return {
+    V, ascent:Math.sqrt(free*G/(0.5*cd*RHO_AIR*area)),
+    burstAlt:ADM*Math.log(Vb/V),
+    neck:gross-balloonG/1000
+  };
+}
+function solveForAscent(target,balloonG,payloadG,burstDia,cd){
+  const Vb=(4/3)*Math.PI*Math.pow(burstDia/2,3);
+  let lo=1e-4, hi=Vb*0.999;
+  for(let i=0;i<70;i++){
+    const mid=(lo+hi)/2;
+    const p=physicsFromVolume(mid,balloonG,payloadG,burstDia,cd);
+    if(!p||p.ascent<target) lo=mid; else hi=mid;
+  }
+  const p=physicsFromVolume((lo+hi)/2,balloonG,payloadG,burstDia,cd);
+  if(!p||Math.abs(p.ascent-target)>0.05) return null;   // couldn't hit target before burst volume
+  return p;
+}
+/* descent time with exponential-atmosphere speedup: t = 2*ADM/v_sl * (1 - e^(-H/2ADM)) */
+function missionSeconds(burstAltM,ascent){
+  const up=burstAltM/ascent;
+  const down=(2*ADM/DESCENT_SL)*(1-Math.exp(-burstAltM/(2*ADM)));
+  return up+down;
+}
+
+/* ---------------- chart geometry ---------------- */
+const W=900,H=520, ML=78,MR=16,MT=18,MB=52;
+const X0=ML, X1=W-MR, Y0=H-MB, Y1=MT;
+const AMIN=1.5, AMAX=8, FTMIN=30000, FTMAX=145000;
+const xOf=a=>X0+(a-AMIN)/(AMAX-AMIN)*(X1-X0);
+const yOf=ft=>Y0-(ft-FTMIN)/(FTMAX-FTMIN)*(Y0-Y1);
+
+/* color scale: small balloons cream -> mid limb blue -> big parachute orange */
+const SIZES=Object.keys(KAYMONT);
+function colorOf(i){
+  const t=i/(SIZES.length-1);
+  const lerp=(a,b)=>Math.round(a+(b-a)*(t<0.5?t*2:0));
+  const lerp2=(a,b)=>Math.round(a+(b-a)*(t<0.5?0:(t-0.5)*2));
+  // cream #EDE7DA -> limb #8FC3E8 -> chute #F2601F
+  if(t<0.5){
+    const u=t*2;
+    return `rgb(${Math.round(237+(143-237)*u)},${Math.round(231+(195-231)*u)},${Math.round(218+(232-218)*u)})`;
+  }
+  const u=(t-0.5)*2;
+  return `rgb(${Math.round(143+(242-143)*u)},${Math.round(195+(96-195)*u)},${Math.round(232+(31-232)*u)})`;
+}
+
+let highlighted=null;   // balloon key or null
+
+function computeCurves(payloadG){
+  const curves={};
+  SIZES.forEach(k=>{
+    const b=KAYMONT[k], pts=[];
+    for(let a=AMIN;a<=AMAX+1e-9;a+=0.25){
+      const p=solveForAscent(a,parseFloat(k),payloadG,b.burst,b.cd);
+      if(p&&p.burstAlt*M_TO_FT>FTMIN) pts.push({a,ft:p.burstAlt*M_TO_FT,p});
+    }
+    curves[k]=pts;
+  });
+  return curves;
+}
+
+function render(){
+  const payloadG=parseInt(document.getElementById("payload").value,10);
+  const goal=parseInt(document.getElementById("goal").value,10)/100;
+  const goalAscent=4.0+goal*(6.5-4.0);
+
+  document.getElementById("payload-readout").textContent=payloadG.toLocaleString()+" g";
+  const goalWord=goal<0.25?"altitude-hungry":goal>0.75?"recovery-first":"balanced";
+  document.getElementById("goal-readout").textContent=goalWord+" · "+goalAscent.toFixed(1)+" m/s";
+
+  const curves=computeCurves(payloadG);
+  drawChart(curves,goalAscent);
+  drawLegend(curves);
+  drawTable(curves,payloadG,goalAscent);
+}
+
+function drawChart(curves,goalAscent){
+  const svg=document.getElementById("chart");
+  let s="";
+
+  /* float-risk zone below 4 m/s */
+  s+=`<rect x="${X0}" y="${Y1}" width="${xOf(4)-X0}" height="${Y0-Y1}" fill="rgba(255,107,107,0.06)"/>`;
+  s+=`<text x="${(X0+xOf(4))/2}" y="${Y1+16}" fill="rgba(255,107,107,0.55)" font-size="11"
+        font-family="IBM Plex Mono" text-anchor="middle">FLOAT RISK</text>`;
+
+  /* gridlines + axis labels */
+  for(let ft=40000;ft<=140000;ft+=20000){
+    s+=`<line x1="${X0}" y1="${yOf(ft)}" x2="${X1}" y2="${yOf(ft)}" stroke="#22314f" stroke-width="1"/>`;
+    s+=`<text x="${X0-8}" y="${yOf(ft)+4}" fill="#5d87a8" font-size="11" font-family="IBM Plex Mono" text-anchor="end">${(ft/1000)}k ft</text>`;
+  }
+  for(let a=2;a<=8;a++){
+    s+=`<line x1="${xOf(a)}" y1="${Y0}" x2="${xOf(a)}" y2="${Y1}" stroke="#182642" stroke-width="1"/>`;
+    s+=`<text x="${xOf(a)}" y="${Y0+18}" fill="#5d87a8" font-size="11" font-family="IBM Plex Mono" text-anchor="middle">${a}</text>`;
+  }
+  s+=`<text x="${(X0+X1)/2}" y="${H-10}" fill="#8fc3e8" font-size="12" font-family="Barlow Condensed"
+       letter-spacing="2" text-anchor="middle">ASCENT RATE (M/S) — LEFT: HIGHER · RIGHT: FASTER HOME</text>`;
+  s+=`<text x="16" y="${(Y0+Y1)/2}" fill="#8fc3e8" font-size="12" font-family="Barlow Condensed"
+       letter-spacing="2" text-anchor="middle" transform="rotate(-90 16 ${(Y0+Y1)/2})">BURST ALTITUDE</text>`;
+
+  /* goal line */
+  s+=`<line x1="${xOf(goalAscent)}" y1="${Y0}" x2="${xOf(goalAscent)}" y2="${Y1}"
+        stroke="#ede7da" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.65"/>`;
+
+  /* curves */
+  SIZES.forEach((k,i)=>{
+    const pts=curves[k];
+    if(pts.length<2) return;
+    const dim=highlighted&&highlighted!==k;
+    const col=colorOf(i);
+    const d=pts.map((p,j)=>(j?"L":"M")+xOf(p.a).toFixed(1)+" "+yOf(p.ft).toFixed(1)).join(" ");
+    s+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="${highlighted===k?4:2.2}"
+         opacity="${dim?0.18:0.95}" stroke-linecap="round"/>`;
+
+    /* end-of-curve size label */
+    const last=pts[pts.length-1];
+    s+=`<text x="${xOf(last.a)+5}" y="${yOf(last.ft)+4}" fill="${col}" font-size="11"
+         font-family="IBM Plex Mono" opacity="${dim?0.18:0.9}">${k}</text>`;
+
+    /* goal marker */
+    const m=interpAt(pts,goalAscent);
+    if(m){
+      s+=`<circle cx="${xOf(goalAscent)}" cy="${yOf(m)}" r="${highlighted===k?7:5}"
+           fill="${col}" stroke="#0a1020" stroke-width="2" opacity="${dim?0.18:1}"/>`;
+    }
+  });
+
+  svg.innerHTML=s;
+}
+
+function interpAt(pts,a){
+  for(let i=0;i<pts.length-1;i++){
+    if(pts[i].a<=a&&pts[i+1].a>=a){
+      const t=(a-pts[i].a)/(pts[i+1].a-pts[i].a);
+      return pts[i].ft+(pts[i+1].ft-pts[i].ft)*t;
+    }
+  }
+  return null;
+}
+
+function drawLegend(curves){
+  const lg=document.getElementById("legend");
+  lg.innerHTML="";
+  SIZES.forEach((k,i)=>{
+    const chip=document.createElement("button");
+    chip.type="button";
+    const feasible=curves[k].length>=2;
+    chip.className="chip"+(highlighted===k?" active":"")+(feasible?"":" dead");
+    chip.innerHTML=`<span class="dot" style="background:${colorOf(i)}"></span>${k} g`;
+    if(feasible){
+      chip.addEventListener("click",()=>{
+        highlighted=(highlighted===k)?null:k;
+        render();
+      });
+    }
+    lg.appendChild(chip);
+  });
+}
+
+function drawTable(curves,payloadG,goalAscent){
+  const tb=document.getElementById("tbody");
+  const rows=[];
+  SIZES.forEach((k,i)=>{
+    const b=KAYMONT[k];
+    const p=solveForAscent(goalAscent,parseFloat(k),payloadG,b.burst,b.cd);
+    if(!p) return;
+    rows.push({k,i,ft:p.burstAlt*M_TO_FT,secs:missionSeconds(p.burstAlt,p.ascent),
+               neck:p.neck*1000,fill:p.V*M3_TO_FT3});
+  });
+  rows.sort((a,b)=>b.ft-a.ft);
+  const bestFt=rows.length?rows[0].ft:0;
+  tb.innerHTML=rows.map(r=>{
+    const h=Math.floor(r.secs/3600),m=Math.round((r.secs%3600)/60);
+    return `<tr class="${r.ft===bestFt?"best":""}">
+      <td><span class="dot" style="background:${colorOf(r.i)}"></span>Kaymont ${r.k} g</td>
+      <td>${Math.round(r.ft).toLocaleString()} ft</td>
+      <td>${h}:${String(m).padStart(2,"0")}</td>
+      <td>${Math.round(r.neck).toLocaleString()} g</td>
+      <td>${r.fill.toFixed(0)} ft³</td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="5">No balloon in the Kaymont range can lift this payload at this ascent rate.</td></tr>`;
+}
+
+document.getElementById("payload").addEventListener("input",render);
+document.getElementById("goal").addEventListener("input",render);
+render();
+</script>
+</body>
+</html>

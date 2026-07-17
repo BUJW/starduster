@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starduster — Things to Consider</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --space:#0a1020; --space-2:#101a30; --panel:#0e1628; --line:#22314f;
+    --limb:#8fc3e8; --limb-dim:#5d87a8;
+    --latex:#ede7da; --latex-dim:#c9c2b2;
+    --chute:#f2601f; --ok:#9fd8a3; --warn:#f2b01f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--space);color:var(--latex);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15.5px;line-height:1.6}
+
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .wordmark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:30px;letter-spacing:.12em;text-transform:uppercase}
+  .wordmark span{color:var(--chute)}
+  .subtitle{font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim)}
+
+  .hero{max-width:860px;margin:0 auto;padding:38px 22px 8px}
+  .hero h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:44px;letter-spacing:.04em;text-transform:uppercase;line-height:1.05}
+  .hero h1 em{font-style:normal;color:var(--limb)}
+  .hero p{color:var(--latex-dim);max-width:640px;margin-top:14px}
+
+  /* ---- altitude-band ladder layout ---- */
+  .ladder{max-width:860px;margin:26px auto 0;padding:0 22px 30px}
+  .band{
+    display:grid;grid-template-columns:86px 1fr;gap:0 24px;
+    margin-bottom:6px;position:relative;
+  }
+  @media(max-width:640px){.band{grid-template-columns:56px 1fr;gap:0 14px}}
+
+  /* the vertical atmosphere spine */
+  .spine{position:relative}
+  .spine::before{
+    content:"";position:absolute;top:0;bottom:0;left:50%;width:14px;transform:translateX(-50%);
+  }
+  .band[data-band="0"] .spine::before{background:linear-gradient(to top,#b8d8ee,#7fb4d9);border-radius:0 0 7px 7px}
+  .band[data-band="1"] .spine::before{background:linear-gradient(to top,#7fb4d9,#3d6f9e)}
+  .band[data-band="2"] .spine::before{background:linear-gradient(to top,#3d6f9e,#14274a)}
+  .band[data-band="3"] .spine::before{background:linear-gradient(to top,#14274a,#030510);border-radius:7px 7px 0 0}
+  .alt-tag{
+    position:sticky;top:12px;
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb);
+    background:var(--space);border:1px solid var(--line);border-radius:4px;
+    padding:6px 6px;text-align:center;line-height:1.35;
+    position:relative;z-index:1;margin-top:6px;
+  }
+
+  .band-body{padding:6px 0 34px}
+  .band-title{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:26px;
+    letter-spacing:.06em;text-transform:uppercase;
+  }
+  .band-sub{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--limb-dim);margin:2px 0 14px;
+  }
+  .band-body h3{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--limb);
+    margin:20px 0 6px;
+  }
+  .band-body p{color:var(--latex-dim);margin-bottom:10px;max-width:640px}
+  .band-body p b{color:var(--latex)}
+  ul{margin:0 0 10px 18px;max-width:640px}
+  li{color:var(--latex-dim);margin-bottom:6px}
+  li b{color:var(--latex)}
+
+  .fieldnote{
+    border-left:3px solid var(--chute);
+    background:var(--panel);
+    padding:12px 16px;margin:16px 0;max-width:640px;border-radius:0 6px 6px 0;
+  }
+  .fieldnote .fn-tag{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--chute);margin-bottom:4px;
+  }
+  .fieldnote p{color:var(--latex-dim);margin:0;font-size:14.5px}
+  .fieldnote.todo{border-left-color:var(--warn)}
+  .fieldnote.todo .fn-tag{color:var(--warn)}
+
+  footer{max-width:860px;margin:0 auto;padding:14px 22px 30px;border-top:1px solid var(--line);font-size:12px;color:var(--limb-dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Star<span>duster</span></div>
+  <div class="subtitle">Things to Consider — Lessons from 100,000 ft</div>
+</header>
+
+<div class="hero">
+  <h1>The atmosphere changes the rules<br><em>four times</em> on the way up.</h1>
+  <p>The calculators tell you where the balloon goes. This page is about what happens to
+     everything hanging under it. These are lessons learned the expensive way — read them
+     before your first launch, not after your first recovery hike.</p>
+</div>
+
+<div class="ladder">
+
+  <!-- ================= BAND 4: 80k+ ================= -->
+  <div class="band" data-band="3">
+    <div class="spine"><div class="alt-tag">80k–105k ft<br>~1% sea-level<br>pressure</div></div>
+    <div class="band-body">
+      <div class="band-title">The Edge — Approaching Hard Vacuum</div>
+      <div class="band-sub">Above 80,000 ft · pressure under ~28 hPa · this is where intuition fails</div>
+
+      <h3>The overheating paradox</h3>
+      <p>Everyone insulates against cold. Almost nobody expects their electronics to <b>overheat at
+      100,000 ft</b> — but with almost no air, there is almost no convective cooling. A GoPro
+      dissipating several watts inside a sealed foam box is now a camera in a thermos. Heat
+      leaves only by radiation and conduction into the box. Cameras that ran cool at 40k
+      can throttle, glitch, or shut down near apogee.</p>
+      <ul>
+        <li><b>Don't hermetically seal warm electronics.</b> A small vent path or thermal mass
+            (heatsink bonded to the camera body) matters more up here than another layer of foam.</li>
+        <li>Sealed bags and containers <b>inflate and pop</b> — a chip bag at launch is a balloon at
+            90k. Any closed volume needs a vent hole.</li>
+        <li>Liquids boil at body temperature up here. Anything wet — gel packs, certain adhesives —
+            behaves differently near vacuum.</li>
+      </ul>
+
+      <h3>Chemical hand warmers stop working</h3>
+      <p>The classic beginner move: toss hand warmers in the payload box. They're <b>iron-oxidation
+      packs that need oxygen</b> — and above 80k there's very little. They fade exactly when you
+      think you need them. If you want heat, budget battery watts for a resistor, or rely on
+      insulation plus the electronics' own dissipation.</p>
+
+      <div class="fieldnote todo">
+        <div class="fn-tag">Field note — Starduster</div>
+        <p>[Josh: your apogee story goes here — camera behavior on the 100,255 ft Mars Yard flight,
+        what survived, what glitched, frame grabs if you have them.]</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BAND 3: 30–70k ================= -->
+  <div class="band" data-band="2">
+    <div class="spine"><div class="alt-tag">30k–70k ft<br>−60 °C zone</div></div>
+    <div class="band-body">
+      <div class="band-title">The Deep Freeze — Tropopause &amp; Lower Stratosphere</div>
+      <div class="band-sub">The coldest part of the flight is NOT the top</div>
+
+      <h3>Cold soak happens in the middle</h3>
+      <p>Counterintuitive but critical: air temperature bottoms out around <b>−55 to −65 °C near the
+      tropopause (~36k–50k ft)</b>, then actually <b>warms slightly</b> as you climb into the
+      stratosphere. Your payload spends 30–60 minutes soaking in the coldest air of the mission
+      on the way up — and again, briefly, on the way down at high descent speed. Design for the
+      middle of the flight, not the top.</p>
+
+      <h3>Batteries — the number one flight killer</h3>
+      <ul>
+        <li><b>Alkalines are dead weight.</b> Their chemistry collapses in deep cold. The hobby
+            standard is <b>lithium primary AAs (Energizer Ultimate Lithium)</b> — rated to −40 °C,
+            light, and flat discharge curve.</li>
+        <li><b>LiPo packs sag hard in cold.</b> Voltage droop under transmit load is how trackers
+            brown-out mid-flight: the radio keys up, voltage dips, the processor resets. Insulate
+            the pack, keep it against the warmest component, and bench-test TX under load
+            in your freezer before you fly.</li>
+        <li>Capacity math: whatever runtime you measured on the bench at 22 °C, plan on
+            meaningfully less. Fly margin — if the mission is 3 hours, power for 8. The chase
+            sometimes takes longer than the flight.</li>
+      </ul>
+
+      <h3>Cameras and lenses</h3>
+      <ul>
+        <li><b>Lens fog and frost:</b> moist cabin air from your launch site condenses on cold
+            glass. Assemble and seal the payload in dry conditions, use anti-fog inserts or
+            desiccant, and give the lens a clear view <em>outside</em> the box rather than shooting
+            through a window that will frost.</li>
+        <li><b>Record time beats resolution.</b> A dead battery at 60k on the way up means no
+            burst footage. Big card, conservative settings, external battery pack if the camera
+            supports it.</li>
+      </ul>
+
+      <h3>Radio through the cold</h3>
+      <ul>
+        <li>Cheap crystal oscillators <b>drift with temperature</b> — your downlink can walk off
+            frequency during cold soak. TCXO-equipped trackers hold the line.</li>
+        <li>Coax and plastic mounts get brittle and stiff; strain-relieve everything, because the
+            burst event is violent and the whole train snaps like a whip.</li>
+      </ul>
+
+      <h3>APRS etiquette — you are the loudest station in four states</h3>
+      <p>From altitude, your little tracker is heard <b>directly</b> by every digipeater and iGate
+      for hundreds of miles. That changes the rules, and getting them wrong makes you famous for
+      the wrong reasons:</p>
+      <ul>
+        <li><b>Set your path to zero hops.</b> No WIDE1-1, no WIDE2-1 — nothing. A ground station
+            needs digipeaters to be heard; you don't. If you fly a repeated path, <em>hundreds</em>
+            of digipeaters that all hear you directly will each rebroadcast every beacon, flooding
+            the shared 144.390 channel across multiple states with thousands of duplicate packets.
+            Your packet already reaches the iGates on the first transmission. <b>It's rude.</b></li>
+        <li><b>Don't wait for a clear channel.</b> Carrier-sense ("listen before transmit") is good
+            manners on the ground — but at 60k your receiver hears every APRS transmission in the
+            entire footprint at once. The channel is <em>never</em> clear from up there, and a
+            polite tracker will sit silent all flight waiting for its turn. <b>Transmit on a fixed
+            schedule</b> — every 60 seconds or so — and let the timing do the sharing.</li>
+        <li>You don't need power to match your reach: a watt or two from altitude is plenty.
+            Line-of-sight does the work; the battery savings go to flight margin.</li>
+      </ul>
+
+      <div class="fieldnote todo">
+        <div class="fn-tag">Field note — Starduster</div>
+        <p>[Josh: your battery/thermal war story — the flight that taught you your current power
+        budget, and what your go-to payload box build is now.]</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BAND 2: 0–30k ================= -->
+  <div class="band" data-band="1">
+    <div class="spine"><div class="alt-tag">0–30k ft<br>weather &amp;<br>airspace</div></div>
+    <div class="band-body">
+      <div class="band-title">The Working Atmosphere — Launch to 30k</div>
+      <div class="band-sub">Where weather, airspace, and rigging mistakes live</div>
+
+      <h3>GPS above 60,000 ft — check before you buy</h3>
+      <p>Export rules (the old COCOM limits) mean many consumer GPS modules <b>stop reporting above
+      ~60,000 ft</b>. Some freeze, some go silent until descent. The hobby standard is a
+      <b>u-blox module set to airborne/high-altitude dynamic model</b>. This is the single most
+      common "why did my tracker go quiet at 60k" question in the hobby — solve it on the bench,
+      not in the field. (It bites in the band above, but you have to fix it down here.)</p>
+
+      <h3>Airspace is a system, not a suggestion</h3>
+      <ul>
+        <li>Know <b>FAR Part 101</b> cold — payload weight limits, weight/size-per-package rules,
+            and when you're exempt vs. when you're filing.</li>
+        <li>Call the ATC facility, file the <b>NOTAM</b>, and launch when you said you would. Your
+            flight passes through altitudes where airliners live — twice.</li>
+        <li>Pick launch sites and forecast days so the predicted track avoids Class B, airports,
+            cities, and big water. Run the prediction for several days around your window; if the
+            landing zone is ugly, scrub. The balloon doesn't care about your schedule.</li>
+      </ul>
+
+      <h3>Rigging and the train</h3>
+      <ul>
+        <li>Order matters: balloon → line → parachute (pre-deployed, inline) → line → payload.
+            After burst, <b>balloon remnants fall with the train</b> and love to foul the chute —
+            leave generous spacing.</li>
+        <li>Gloves and ground sheet at fill: skin oils weaken latex, and a Texas stubble field
+            will find the one thorn your balloon can't survive.</li>
+        <li>Every knot taped or sewn. The burst shock at −60 °C is the test your rigging either
+            passes or doesn't.</li>
+      </ul>
+
+      <div class="fieldnote todo">
+        <div class="fn-tag">Field note — Starduster</div>
+        <p>[Josh: your launch-day checklist culture — the NOTAM call script, the fill-scale ritual,
+        the one rigging rule you never break.]</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= BAND 1: descent/recovery ================= -->
+  <div class="band" data-band="0">
+    <div class="spine"><div class="alt-tag">Descent &amp;<br>recovery</div></div>
+    <div class="band-body">
+      <div class="band-title">Down &amp; Dirty — Descent and Recovery</div>
+      <div class="band-sub">The mission isn't over at burst — half the failures happen now</div>
+
+      <h3>The descent is fast, then slow</h3>
+      <p>In thin air the chute barely bites: descent from 100k starts at <b>very high speed</b>
+      and only settles to your sea-level rate as the air thickens. That's normal — don't panic
+      when the tracker shows a screaming fall at 90k. But it means the burst shock and early
+      descent are the structural stress test.</p>
+
+      <h3>Condensation, round two</h3>
+      <p>A payload cold-soaked to −40 °C descending into warm, humid Texas air <b>fogs and drips
+      instantly</b> — inside and out. Expect wet electronics at recovery; design so a little
+      condensation isn't fatal, and get the SD cards out and dry early.</p>
+
+      <h3>Recovery realities</h3>
+      <ul>
+        <li><b>Redundant tracking:</b> APRS for the flight, plus a cheap independent tracker
+            (SPOT, LoRa, or a phone in a pinch) for the last hundred feet — APRS coverage near
+            the ground in ranch country is spotty exactly when you need it most.</li>
+        <li>Put a <b>label on the payload</b>: name, phone number, "harmless science experiment,"
+            and a small reward line. Payloads land in strangers' fields; make the stranger your ally.</li>
+        <li>Trees eat payloads. A telescoping pole in the chase car has saved more missions than
+            any piece of electronics.</li>
+        <li>Landowner permission before you hop a fence — in Texas especially. A friendly knock
+            recovers payloads; a trespass call ends hobbies.</li>
+      </ul>
+
+      <div class="fieldnote todo">
+        <div class="fn-tag">Field note — Starduster</div>
+        <p>[Josh: best recovery story — the 98.78-mile chase, the weirdest landing spot, the
+        landowner conversations.]</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Starduster · W3ARD · Waco TX — Lessons compiled from flights to 100,255 ft. Estimates and advice
+  offered in the spirit of the hobby; you are the pilot in command of your own mistakes. See FAR
+  Part 101 before flying.
+</footer>
+
+</body>
+</html>
