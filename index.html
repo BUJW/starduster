@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex">
+<title>Starduster — High-Altitude Balloon Mission Control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --space:#0a1020; --space-2:#101a30; --panel:#0e1628; --line:#22314f;
+    --limb:#8fc3e8; --limb-dim:#5d87a8;
+    --latex:#ede7da; --latex-dim:#c9c2b2;
+    --chute:#f2601f; --ok:#9fd8a3;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--space);color:var(--latex);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15.5px;line-height:1.6}
+
+  /* atmosphere gradient backdrop */
+  .sky{
+    background:linear-gradient(to bottom,
+      #030510 0%, #0a1428 30%, #14274a 55%, #2b4f7d 80%, #5d87a8 100%);
+    border-bottom:1px solid var(--line);
+    padding:56px 22px 60px;
+  }
+  .hero{max-width:900px;margin:0 auto}
+  .wordmark{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:64px;
+    letter-spacing:.14em;text-transform:uppercase;line-height:1;
+  }
+  .wordmark span{color:var(--chute)}
+  .tagline{
+    font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:20px;
+    letter-spacing:.18em;text-transform:uppercase;color:var(--limb);margin-top:8px;
+  }
+  .hero p{color:var(--latex);opacity:.85;max-width:600px;margin-top:16px}
+  .callsign{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--latex);opacity:.7;margin-top:18px}
+  .callsign b{color:var(--chute)}
+
+  .wrap{max-width:900px;margin:0 auto;padding:34px 22px 40px}
+  .group-title{
+    font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:16px;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--limb-dim);
+    margin:26px 0 12px;display:flex;align-items:center;gap:10px;
+  }
+  .group-title::after{content:"";flex:1;height:1px;background:var(--line)}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+  a.card{
+    display:block;background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:18px 18px 16px;text-decoration:none;color:inherit;
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  a.card:hover{border-color:var(--chute);transform:translateY(-2px)}
+  a.card:focus-visible{outline:2px solid var(--limb);outline-offset:2px}
+  .card .no{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--chute);letter-spacing:.12em}
+  .card h3{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:22px;
+    letter-spacing:.05em;text-transform:uppercase;margin:2px 0 6px;color:var(--latex);
+  }
+  .card p{font-size:14px;color:var(--latex-dim)}
+  .card.soon{opacity:.55;pointer-events:none}
+  .card.soon h3::after{
+    content:"In build";font-family:'IBM Plex Mono',monospace;font-size:10px;
+    color:var(--warn,#f2b01f);border:1px solid var(--line);border-radius:999px;
+    padding:2px 8px;margin-left:10px;vertical-align:3px;letter-spacing:.08em;text-transform:none;
+  }
+
+  footer{max-width:900px;margin:0 auto;padding:18px 22px 30px;border-top:1px solid var(--line);font-size:12px;color:var(--limb-dim)}
+  footer a{color:var(--limb)}
+  @media (prefers-reduced-motion: reduce){a.card{transition:none}}
+</style>
+</head>
+<body>
+
+<div class="sky">
+  <div class="hero">
+    <div class="wordmark">Star<span>duster</span></div>
+    <div class="tagline">High-Altitude Balloon Mission Control</div>
+    <p>Tools and hard-won lessons for sending cameras and radios to the edge of space on latex and
+       helium — from balloon selection through burst at 100,000 feet, and the chase that follows.</p>
+    <div class="callsign"><b>W3ARD</b> · EM11jn · Waco, Texas · flights to 100,255 ft</div>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <div class="group-title">Mission Tools</div>
+  <div class="cards">
+    <a class="card" href="starduster-balloon-selector.html">
+      <div class="no">TOOL 01</div>
+      <h3>Balloon Selector</h3>
+      <p>Every Kaymont size as a performance envelope. Set your payload, pick altitude or fast
+         recovery, see what each balloon delivers.</p>
+    </a>
+    <a class="card" href="starduster-preflight.html">
+      <div class="no">TOOL 02</div>
+      <h3>Pre-Flight Mission Control</h3>
+      <p>Fill volumes, neck lift, and burst altitude — piped straight into a Tawhiri flight
+         prediction with map, landing zone, and Google Earth KML.</p>
+    </a>
+    <a class="card soon" href="#">
+      <div class="no">TOOL 03</div>
+      <h3>In-Flight Tracker</h3>
+      <p>Live APRS position, updating landing prediction, and the radio-footprint ring — mission
+         control for the chase truck.</p>
+    </a>
+  </div>
+
+  <div class="group-title">Field Guide</div>
+  <div class="cards">
+    <a class="card" href="starduster-dynamics.html">
+      <div class="no">GUIDE 01</div>
+      <h3>Flight Dynamics</h3>
+      <p>Why everything spins, and the physics that fixes it — inertia booms, swivels, pendulum
+         trains, and the fin trap.</p>
+    </a>
+    <a class="card" href="starduster-radio.html">
+      <div class="no">GUIDE 02</div>
+      <h3>The Radio Side</h3>
+      <p>Why ham radio rides every flight: APRS, crossband repeaters, and a radio footprint that
+         covers two Texases at burst.</p>
+    </a>
+    <a class="card" href="starduster-lessons.html">
+      <div class="no">GUIDE 03</div>
+      <h3>Things to Consider</h3>
+      <p>Lessons by altitude band — batteries in the deep freeze, overheating near vacuum, APRS
+         etiquette, and getting it all back.</p>
+    </a>
+  </div>
+
+</div>
+
+<footer>
+  Starduster · W3ARD · Waco TX — Predictions and physics are estimates; verify before you launch and
+  mind FAR Part 101. Trajectories by SondeHub Tawhiri (NOAA GFS), non-commercial use.
+</footer>
+
+</body>
+</html>
