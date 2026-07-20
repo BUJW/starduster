@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Starduster — MYST · Mars Yard 2.5 Shoe Toss · 100,255 ft</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --space:#0a1020; --space-2:#101a30; --panel:#0e1628; --line:#22314f;
+    --limb:#8fc3e8; --limb-dim:#5d87a8;
+    --latex:#ede7da; --latex-dim:#c9c2b2;
+    --chute:#f2601f; --ok:#9fd8a3; --warn:#f2b01f;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--space);color:var(--latex);font-family:'IBM Plex Sans',system-ui,sans-serif;font-size:15.5px;line-height:1.6}
+
+  header{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;padding:18px 22px 14px;border-bottom:1px solid var(--line)}
+  .wordmark{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:30px;letter-spacing:.12em;text-transform:uppercase}
+  .wordmark span{color:var(--chute)}
+  .subtitle{font-family:'Barlow Condensed',sans-serif;font-weight:500;font-size:17px;letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim)}
+  .sd-nav{display:flex;gap:2px;flex-wrap:wrap;padding:6px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
+  .sd-nav a{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:13.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--limb-dim);text-decoration:none;padding:5px 11px;border-radius:4px}
+  .sd-nav a:hover{color:var(--latex);background:var(--space-2)}
+  .sd-nav a.here{color:var(--chute)}
+
+  .hero{max-width:880px;margin:0 auto;padding:34px 22px 6px}
+  .mission-tag{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--chute);letter-spacing:.14em;text-transform:uppercase}
+  h1{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:42px;letter-spacing:.04em;text-transform:uppercase;line-height:1.08;margin-top:4px}
+  h1 em{font-style:normal;color:var(--limb)}
+  .lede{color:var(--latex-dim);max-width:680px;margin:12px 0 8px}
+  .lede b{color:var(--latex)}
+
+  .wrap{max-width:880px;margin:0 auto;padding:10px 22px 40px}
+  h2{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:24px;
+    letter-spacing:.06em;text-transform:uppercase;margin:34px 0 10px;
+    display:flex;align-items:center;gap:12px;
+  }
+  h2::after{content:"";flex:1;height:1px;background:var(--line)}
+  p{color:var(--latex-dim);margin-bottom:12px;max-width:680px}
+  p b{color:var(--latex)}
+  ul{margin:0 0 12px 18px;max-width:680px}
+  li{color:var(--latex-dim);margin-bottom:6px}
+  li b{color:var(--latex)}
+
+  /* quick facts */
+  .facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:14px 0}
+  .fact{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+  .fact .lbl{font-family:'Barlow Condensed',sans-serif;font-weight:600;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--limb-dim)}
+  .fact .val{font-family:'IBM Plex Mono',monospace;font-weight:500;font-size:19px;color:var(--latex);margin-top:2px}
+  .fact .alt{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim)}
+  .fact.hot .val{color:var(--chute)}
+
+  .notam{
+    background:var(--panel);border:1px solid var(--warn);border-radius:6px;
+    padding:12px 16px;margin:10px 0 4px;max-width:680px;
+    font-family:'IBM Plex Mono',monospace;font-size:12.5px;color:var(--warn);
+    word-break:break-word;
+  }
+  .notam-cap{font-size:12px;color:var(--limb-dim);max-width:680px;margin-bottom:12px}
+
+  .fieldnote{
+    border-left:3px solid var(--chute);background:var(--panel);
+    padding:12px 16px;margin:16px 0;max-width:680px;border-radius:0 6px 6px 0;
+  }
+  .fieldnote .fn-tag{
+    font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:13px;
+    letter-spacing:.16em;text-transform:uppercase;color:var(--chute);margin-bottom:4px;
+  }
+  .fieldnote p{margin:0;font-size:14.5px}
+  .fieldnote.todo{border-left-color:var(--warn)}
+  .fieldnote.todo .fn-tag{color:var(--warn)}
+
+  .gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:14px 0}
+  .gallery figure{background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .gallery img{display:block;width:100%;height:auto}
+  .gallery figcaption{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim);padding:6px 10px}
+  .gallery-note{font-size:12px;color:var(--limb-dim);max-width:680px}
+
+  footer{max-width:880px;margin:0 auto;padding:14px 22px 30px;border-top:1px solid var(--line);font-size:12px;color:var(--limb-dim)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wordmark">Star<span>duster</span></div>
+  <div class="subtitle">Mission Archive</div>
+</header>
+<nav class="sd-nav">
+  <a href="index.html">Home</a>
+  <a href="starduster-missions.html" class="here">Missions</a>
+  <a href="starduster-balloon-selector.html">Selector</a>
+  <a href="starduster-preflight.html">Pre-Flight</a>
+  <a href="starduster-dynamics.html">Dynamics</a>
+  <a href="starduster-radio.html">Radio</a>
+  <a href="starduster-lessons.html">Lessons</a>
+  <a href="starduster-about.html">About</a>
+</nav>
+
+<div class="hero">
+  <div class="mission-tag">Mission · May 23, 2021 · Groesbeck TX → the Bosque backwoods</div>
+  <h1>MYST — Mars Yard 2.5 Shoe Toss<br><em>100,255 feet</em></h1>
+  <p class="lede">A Kaymont 1200 carried three GoPros, an APRS tracker, a SPOT beacon, a Pixhawk
+  data logger, a kid's plastic space shuttle, and a pair of <b>Tom Sachs × Nikecraft Mars Yard 2.5
+  sneakers</b> to the edge of space — part of the Mars Yard Wear Tester program, on the theory that
+  a shoe built for Mars ought to at least meet the stratosphere. The photo is real. It is not a
+  composite. The shoes came home and are still being worn.</p>
+</div>
+
+<div class="wrap">
+
+  <h2>Quick Facts</h2>
+  <div class="facts">
+    <div class="fact hot"><div class="lbl">Max altitude</div><div class="val">100,255 ft</div><div class="alt">30,558 m</div></div>
+    <div class="fact"><div class="lbl">Ascent rate</div><div class="val">944 fpm</div><div class="alt">4.8 m/s · 1:48:56 up</div></div>
+    <div class="fact"><div class="lbl">Descent rate</div><div class="val">1,100 fpm</div><div class="alt">avg · 0:28:56 down</div></div>
+    <div class="fact"><div class="lbl">Max vertical</div><div class="val">172 mph</div><div class="alt">thin-air freefall</div></div>
+    <div class="fact"><div class="lbl">Max lateral</div><div class="val">46 mph</div><div class="alt">range ~40 mi</div></div>
+    <div class="fact"><div class="lbl">Balloon Ø</div><div class="val">5 → 28 ft</div><div class="alt">launch → burst</div></div>
+    <div class="fact"><div class="lbl">Fill</div><div class="val">~210 ft³ He</div><div class="alt">Kaymont 1200 g</div></div>
+    <div class="fact"><div class="lbl">Payload</div><div class="val">~3,100 g</div><div class="alt">all-up under the balloon</div></div>
+    <div class="fact"><div class="lbl">Mission cost</div><div class="val">~$2,000</div><div class="alt">He + balloon expended · rig recovered</div></div>
+  </div>
+
+  <h2>Flight Plan &amp; Airspace</h2>
+  <p>Scheduled launch 23 May, 11:00a Central (1600Z), Groesbeck TX toward Frost TX. Pre-flight
+  prediction: ~96,200 ft max altitude, 2h10m aloft, 43-mile range. Tracking on APRS 144.390 —
+  <b>W3ARD-11</b> (balloon), <b>W3ARD-9</b> and <b>W4IPA-9</b> (chase cars): every vehicle in the
+  chase on the same map as the payload.</p>
+  <div class="notam">!FTW 05/600 ZFW AIRSPACE UNMANNED FREE BALLOON ACT094036 (7NM SW LXY) SFC-UNL NWB TO 100000FT 2105231600-2105231830</div>
+  <p class="notam-cap">The NOTAM, filed and published with the flight card. The airspace paperwork
+  is part of the mission, not an afterthought — post yours.</p>
+
+  <h2>Payload Manifest</h2>
+  <ul>
+    <li><b>3× GoPro cameras</b> on a custom rig (recovered)</li>
+    <li><b>APRS transmitter</b> — W3ARD-11 (recovered)</li>
+    <li><b>SPOT Gen 3</b> satellite tracker — independent second system (recovered)</li>
+    <li><b>Pixhawk flight controller</b> flown as data logger (recovered)</li>
+    <li><b>One plastic space shuttle</b>, on loan from the flight director's son (recovered)</li>
+    <li><b>Nike Mars Yard 2.5 sneakers</b> — priceless (recovered, still in service)</li>
+  </ul>
+
+  <h2>Prediction vs. Reality</h2>
+  <p>Predicted 96,200 ft; flew <b>100,255 ft</b> — about 4% over, which says real-world Kaymont
+  1200s burst a little bigger than the spec sheet. Predicted 43 miles; flew ~40. Measured ascent of
+  4.8 m/s against the modeled fill. These numbers now calibrate the
+  <a href="starduster-preflight.html" style="color:var(--limb)">Pre-Flight tool</a> — every
+  published flight card makes the next prediction better. That's the whole reason to publish data,
+  not just photos.</p>
+  <figure style="background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;max-width:680px;margin:0 0 14px">
+    <img src="myst-track-curtain.jpg" alt="W3ARD-11 APRS flight track rendered as a green curtain in Google Earth over central Texas" style="display:block;width:100%;height:auto" loading="lazy">
+    <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim);padding:6px 10px">As flown: W3ARD-11's APRS track, curtain-rendered in Google Earth. Every Starduster prediction is graded against tracks like this one.</figcaption>
+  </figure>
+
+  <h2>Recovery</h2>
+  <p>Not straightforward: <b>two attempts</b>, ending in a stream crossing into thick wooded
+  bottomland. The descent from 100k starts at 172 mph in air too thin for the chute to bite, and
+  the woods don't care how good your prediction was. Redundant tracking — APRS for the flight,
+  SPOT for the last hundred feet — earned its keep.</p>
+
+  <div class="photo-pair" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 0">
+    <figure style="background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:0">
+      <img src="myst-stream-crossing.jpg" alt="Josh fording a muddy stream with the payload rig on his shoulder and the Mars Yard sneakers hanging around his neck" style="display:block;width:100%;height:auto" loading="lazy">
+      <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim);padding:6px 10px">The stream crossing. Rig on the shoulder, priceless cargo around the neck, dignity optional.</figcaption>
+    </figure>
+    <figure style="background:var(--panel);border:1px solid var(--line);border-radius:6px;overflow:hidden;margin:0">
+      <img src="myst-recovery-crew.jpg" alt="Recovery crew presenting the recovered Mars Yard sneakers and payload frame in tall grass" style="display:block;width:100%;height:auto" loading="lazy">
+      <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim);padding:6px 10px">Recovery confirmed. Payload, shoes, and crew — all accounted for.</figcaption>
+    </figure>
+  </div>
+
+  <div class="fieldnote todo">
+    <div class="fn-tag">Field note — the full story</div>
+    <p>[Josh: the two-attempt recovery, the stream crossing, and how deep in the Bosque woods it
+    actually was — dictate it and it goes here.]</p>
+  </div>
+
+  <h2>Gallery</h2>
+  <p class="gallery-note">Selected frames from the flight. Images currently served from the
+  original starduster.info archive; they'll move here with the full site migration.</p>
+  <div class="gallery">
+    <figure>
+      <img src="myst-shoes-space.jpg" alt="The Mars Yard 2.5 sneakers hanging from the payload boom above the curvature of the Earth" loading="lazy">
+      <figcaption>The pair at apogee — Earth's limb below, space above. Wear test: passed.</figcaption>
+    </figure>
+    <figure>
+      <img src="myst-motto-shuttle.jpg" alt="The toy space shuttle mounted to the payload frame beneath a label reading PER ASPERA AD ASTRA" loading="lazy">
+      <figcaption>The rig carried its own motto: PER ASPERA AD ASTRA — through hardships to the stars. Shuttle on loan from the flight director's son.</figcaption>
+    </figure>
+    <figure>
+      <img src="https://starduster.info/wp-content/uploads/2021/06/bujw_falling_lens_corrected.jpg" alt="Mars Yard 2.5 sneaker falling above the curvature of the Earth at 100,255 feet" loading="lazy">
+      <figcaption>The shot: 100,255 ft above central Texas. Not a composite.</figcaption>
+    </figure>
+    <figure>
+      <img src="https://starduster.info/wp-content/uploads/2021/06/bujw_climb.jpg" alt="View during ascent" loading="lazy">
+      <figcaption>The climb.</figcaption>
+    </figure>
+    <figure>
+      <img src="https://starduster.info/wp-content/uploads/2021/06/bujw_burst.jpg" alt="Balloon burst at apogee" loading="lazy">
+      <figcaption>Burst — the 28-foot balloon lets go.</figcaption>
+    </figure>
+    <figure>
+      <img src="https://starduster.info/wp-content/uploads/2021/06/bujw_floating.jpg" alt="Payload descending under parachute" loading="lazy">
+      <figcaption>Under canopy.</figcaption>
+    </figure>
+    <figure>
+      <img src="https://starduster.info/wp-content/uploads/2021/06/bujw_launch_selfe01.jpg" alt="Launch day selfie" loading="lazy">
+      <figcaption>Launch crew, Groesbeck TX.</figcaption>
+    </figure>
+    <figure>
+      <img src="https://starduster.info/wp-content/uploads/2021/05/g0023114.jpg" alt="Payload rig with Mars Yard sneakers before flight" loading="lazy">
+      <figcaption>The rig and its famous cargo.</figcaption>
+    </figure>
+  </div>
+
+  <h2>Lessons This Flight Wrote</h2>
+  <ul>
+    <li><b>Publish the flight card before, and the data card after.</b> Prediction vs. reality is
+        how the tools — and the pilot — get better.</li>
+    <li><b>Post the NOTAM verbatim.</b> It coordinates the airspace and it teaches the next
+        balloonist what responsible looks like.</li>
+    <li><b>Everyone in the chase gets an SSID.</b> The map should show the whole operation, not
+        just the balloon.</li>
+    <li><b>Two independent trackers.</b> APRS flew the mission; SPOT closed the last hundred feet
+        in the woods.</li>
+    <li><b>Budget honestly.</b> ~$2,000 all-in; helium and latex are expended, everything else
+        flies again.</li>
+  </ul>
+</div>
+
+<footer>
+  Starduster · W3ARD · Mission flown May 2021 under FAR Part 101 with NOTAM as published. Mars Yard
+  2.5 flown as part of the Tom Sachs × Nikecraft Wear Tester program. Archive page rebuilt with
+  Claude, Anthropic's AI, which maintains the shoes earned their scuffs more honestly than most.
+</footer>
+
+</body>
+</html>

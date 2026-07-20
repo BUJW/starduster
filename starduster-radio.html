@@ -89,11 +89,13 @@
 </header>
 <nav class="sd-nav">
   <a href="index.html">Home</a>
+  <a href="starduster-missions.html">Missions</a>
   <a href="starduster-balloon-selector.html">Selector</a>
   <a href="starduster-preflight.html">Pre-Flight</a>
   <a href="starduster-dynamics.html">Dynamics</a>
   <a href="starduster-radio.html" class="here">Radio</a>
   <a href="starduster-lessons.html">Lessons</a>
+  <a href="starduster-about.html">About</a>
 </nav>
 <style>
 .sd-nav{display:flex;gap:2px;flex-wrap:wrap;padding:6px 18px;border-bottom:1px solid var(--line);background:var(--panel)}
@@ -168,10 +170,24 @@
   repeater on the continent — for a couple of hours.</p>
   <p>The non-obvious part is the <b>crossband</b>. A same-band repeater (listen on 2 m, talk on 2 m)
   has to hear a whisper while shouting on a nearby frequency, which takes bulky cavity duplexers —
-  far too heavy to fly. Listening on <b>70 cm</b> and retransmitting on <b>2 m</b> (or the reverse)
-  separates receive and transmit by hundreds of MHz, so a tiny handheld radio can do the whole job
-  with no duplexer at all. That's why crossband is <em>the</em> balloon repeater architecture:
-  it's the only one that fits in a lunchbox.</p>
+  far too heavy to fly. Splitting receive and transmit across bands separates them by hundreds of
+  MHz, so a tiny transceiver pair can do the whole job with no duplexer at all. That's why crossband
+  is <em>the</em> balloon repeater architecture: it's the only one that fits in a lunchbox.
+  Starduster's flight unit listens on <b>2 m (145.725 MHz up)</b> and retransmits on
+  <b>70 cm (434.000 MHz down)</b>.</p>
+
+  <div class="diagram" style="padding:10px">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <figure style="margin:0;background:var(--space);border:1px solid var(--line);border-radius:6px;overflow:hidden">
+        <img src="radio-repeater-bench.jpg" alt="Starduster crossband repeater on the workbench: two transceiver boards, battery packs, and a Kenwood handheld showing 434.000 and 145.725" style="display:block;width:100%;height:auto">
+        <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim);padding:6px 10px">The flight repeater on the bench: uplink and downlink boards, battery tubes, and the Kenwood confirming the pair.</figcaption>
+      </figure>
+      <figure style="margin:0;background:var(--space);border:1px solid var(--line);border-radius:6px;overflow:hidden">
+        <img src="radio-repeater-boards.jpg" alt="Closeup of the two RS-UV3A transceiver shields labeled UP145725 and DN434000, wired together" style="display:block;width:100%;height:auto">
+        <figcaption style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--limb-dim);padding:6px 10px">Two transceiver shields wired back-to-back — UP145725 in, DN434000 out. The whole mountaintop, in grams.</figcaption>
+      </figure>
+    </div>
+  </div>
 
   <div class="diagram">
     <svg viewBox="0 0 840 320" role="img" aria-label="Two distant hams talking through a balloon crossband repeater">
@@ -190,10 +206,10 @@
       <text x="686" y="312" fill="#9fd8a3" font-size="12">Ham B · El Paso</text>
       <!-- uplink -->
       <line x1="112" y1="266" x2="408" y2="116" stroke="#8fc3e8" stroke-width="2" stroke-dasharray="7 5"/>
-      <text x="170" y="176" fill="#8fc3e8" font-size="12" transform="rotate(-27 190 180)">uplink · 70 cm (446 MHz)</text>
+      <text x="170" y="176" fill="#8fc3e8" font-size="12" transform="rotate(-27 190 180)">uplink · 2 m (145.725 MHz)</text>
       <!-- downlink -->
       <line x1="432" y1="116" x2="728" y2="266" stroke="#9fd8a3" stroke-width="2" stroke-dasharray="7 5"/>
-      <text x="500" y="164" fill="#9fd8a3" font-size="12" transform="rotate(27 520 168)">downlink · 2 m (146 MHz)</text>
+      <text x="500" y="164" fill="#9fd8a3" font-size="12" transform="rotate(27 520 168)">downlink · 70 cm (434.000 MHz)</text>
       <!-- blocked path -->
       <path d="M 130 288 Q 420 336 710 288" fill="none" stroke="#ff6b6b" stroke-width="1.6" stroke-dasharray="3 5"/>
       <text x="352" y="288" fill="#ff6b6b" font-size="11">direct path: blocked by Earth</text>
