@@ -61,6 +61,7 @@
 
 <div class="drop" id="drop">
   Drop KML or CSV files here, or <button type="button" id="pick">choose files</button>
+  <div style="margin-top:14px"><button type="button" id="sample">Try it with a real sighting</button></div>
 </div>
 <input type="file" id="file" accept=".kml,.csv,.xml,text/csv,application/vnd.google-earth.kml+xml" multiple hidden>
 <div class="msg" id="msg"></div>
@@ -257,6 +258,52 @@ function download(text,name,type){
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);
 }
 
+/* ---------- sample data ----------
+   The two mailed exports from the 16 Sep 2026 campus test, embedded so the
+   sample works with no network at all.                                      */
+const SAMPLE=[
+  ["sighting-a-2026-09-16.kml",`<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+<Document>
+<Placemark>
+<name>Theodolite Export 2026.09.16_15.38.10</name>
+<Point>
+<coordinates>-97.116028,31.546600,120.373886</coordinates>
+</Point>
+<Camera>
+<longitude>-97.116028</longitude>
+<latitude>31.546600</latitude>
+<altitude>120.373886</altitude>
+<heading>64.385605</heading>
+<tilt>91.122192</tilt>
+<roll>0.490448</roll>
+<altitudeMode>absolute</altitudeMode>
+</Camera>
+</Placemark>
+</Document>
+</kml>`],
+  ["sighting-b-2026-09-16.kml",`<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+<Document>
+<Placemark>
+<name>Theodolite Export 2026.09.16_15.40.18</name>
+<Point>
+<coordinates>-97.114601,31.545586,122.168015</coordinates>
+</Point>
+<Camera>
+<longitude>-97.114601</longitude>
+<latitude>31.545586</latitude>
+<altitude>122.168015</altitude>
+<heading>38.737942</heading>
+<tilt>90.019669</tilt>
+<roll>0.523997</roll>
+<altitudeMode>absolute</altitudeMode>
+</Camera>
+</Placemark>
+</Document>
+</kml>`]
+];
+
 /* ---------- state ---------- */
 let ALL=[], SEEN=new Set(), FILES=[];
 const keyOf=o=>`${o.dt}|${o.lat.toFixed(6)}|${o.lon.toFixed(6)}|${o.hdg.toFixed(4)}`;
@@ -338,6 +385,12 @@ function ingest(text,fname){
 
 $("clear").onclick=()=>{ALL=[];SEEN=new Set();FILES=[];$("out").innerHTML="";
   $("msg").textContent="";$("msg").className="msg";$("topacts").style.display="none";};
+$("sample").onclick=()=>{
+  $("clear").onclick();
+  for(const [n,txt] of SAMPLE) ingest(txt,n);
+  $("msg").textContent="Sample loaded: two spotters sighting a building cupola on the Baylor campus, 16 September 2026.";
+};
+
 $("pick").onclick=()=>$("file").click();
 $("file").onchange=e=>{for(const f of e.target.files) f.text().then(t=>ingest(t,f.name)); e.target.value="";};
 const d=$("drop");
