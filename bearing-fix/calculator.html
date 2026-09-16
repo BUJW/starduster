@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bearing Fix — calculator</title>
+<style>
+  :root{--paper:#E6E9E7;--panel:#F3F5F3;--ink:#17262C;--soft:#56686E;
+        --rule:#B6C1C1;--post:#2A6178;--fix:#C0451B;
+        --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+        --sans:"Helvetica Neue",Helvetica,Arial,sans-serif}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.6}
+  .wrap{max-width:760px;margin:0 auto;padding:44px 22px 80px}
+  h1{font-weight:400;font-size:clamp(28px,6vw,38px);letter-spacing:-.018em;margin:0 0 10px}
+  .sub{font-family:var(--sans);font-size:15px;color:var(--soft);margin:0 0 28px;max-width:60ch}
+  a{color:var(--post)}
+
+  .drop{border:1px dashed var(--rule);background:var(--panel);padding:30px 20px;text-align:center;
+        font-family:var(--sans);font-size:15px;color:var(--soft);transition:border-color .12s,background .12s}
+  .drop.hot{border-color:var(--post);background:#E9EFF1}
+
+  button{font-family:var(--sans);font-size:14px;font-weight:500;color:var(--ink);
+         background:var(--panel);border:1px solid var(--rule);padding:8px 14px;cursor:pointer}
+  button:hover{background:#E1E7E5}
+  button:focus-visible{outline:2px solid var(--post);outline-offset:2px}
+  button.link{border:0;background:none;color:var(--post);text-decoration:underline;padding:0;font-size:13.5px}
+
+  .msg{font-family:var(--sans);font-size:14px;color:var(--soft);margin-top:14px;min-height:1em}
+  .msg.bad{color:#8A3318}
+
+  .card{background:var(--panel);border:1px solid var(--rule);border-left:3px solid var(--fix);
+        padding:20px 22px;margin-top:22px}
+  .card h2{font-family:var(--sans);font-size:13px;font-weight:600;color:var(--soft);
+           margin:0 0 10px;letter-spacing:.01em}
+  .coord{font-family:var(--sans);font-size:clamp(20px,5vw,28px);font-weight:500;
+         font-variant-numeric:tabular-nums;letter-spacing:-.01em;line-height:1.25;word-break:break-word}
+  .facts{margin-top:14px;font-family:var(--sans);font-size:13.5px;color:var(--soft);
+         font-variant-numeric:tabular-nums}
+  .facts span{display:inline-block;margin-right:18px}
+  .acts{margin-top:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center}
+  .warn{margin-top:14px;padding:10px 12px;background:#F4EEDD;border-left:3px solid #8A6318;
+        font-family:var(--sans);font-size:13.5px;color:#55451C}
+
+  svg.plot{width:100%;height:auto;display:block;background:#FBFCFB;border:1px solid var(--rule);margin-top:16px}
+
+  details{margin-top:20px;font-family:var(--sans);font-size:14px}
+  summary{cursor:pointer;color:var(--soft)}
+  table{border-collapse:collapse;width:100%;font-family:var(--sans);font-size:13px;
+        font-variant-numeric:tabular-nums;margin-top:10px}
+  th{text-align:left;font-size:11.5px;font-weight:600;color:var(--soft);padding:4px 10px 4px 0;border-bottom:1px solid var(--rule)}
+  td{padding:4px 10px 4px 0;border-bottom:1px solid rgba(182,193,193,.5);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Bearing Fix</h1>
+<p class="sub">Drop in the Theodolite CSV logs from both spotters. Get the coordinate where their sight lines cross. Nothing is uploaded — this all runs in your browser, so it works with no signal.
+<a href="index.html">Back to the writeup</a></p>
+
+<p class="sub">Logs are cumulative — each time a spotter mails their log it contains the whole day. Repeats are ignored, so just keep dropping files in as they arrive. Put the flight card number in the app's note field so each flight gets its own fix.</p>
+
+<div class="drop" id="drop">
+  Drop CSV files here, or <button type="button" id="pick">choose files</button>
+</div>
+<input type="file" id="file" accept=".csv,text/csv" multiple hidden>
+<div class="msg" id="msg"></div>
+<div class="acts" id="topacts" style="display:none"><button type="button" id="clear">Start over</button></div>
+
+<div id="out"></div>
+
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+
+/* --- geo --- */
+function mpd(lat){const p=lat*Math.PI/180;return{
+  lat:111132.92-559.82*Math.cos(2*p)+1.175*Math.cos(4*p),
+  lon:111412.84*Math.cos(p)-93.5*Math.cos(3*p)};}
+const toENU=(lat,lon,l0,o0)=>{const m=mpd(l0);return{e:(lon-o0)*m.lon,n:(lat-l0)*m.lat};};
+const toLL=(e,n,l0,o0)=>{const m=mpd(l0);return{lat:l0+n/m.lat,lon:o0+e/m.lon};};
+
+/* --- csv --- */
+function splitLine(s){const o=[];let c="",q=false;
+  for(let i=0;i<s.length;i++){const ch=s[i];
+    if(ch==='"'){if(q&&s[i+1]==='"'){c+='"';i++;}else q=!q;}
+    else if(ch===","&&!q){o.push(c);c="";}else c+=ch;}
+  o.push(c);return o.map(x=>x.trim());}
+
+function parse(text){
+  const L=text.split(/\r?\n/).filter(l=>l.trim());
+  if(!L.length) return [];
+  const h=splitLine(L[0]).map(x=>x.toUpperCase());
+  const iLat=h.indexOf("LAT_DEG"),iLon=h.indexOf("LON_DEG"),iHdg=h.indexOf("HDG_DEG");
+  if(iLat<0||iLon<0||iHdg<0) return [];
+  const iDt=h.indexOf("DATE_TIME"),iType=h.indexOf("HDG_TYPE"),iNote=h.indexOf("NOTE");
+  const out=[];
+  for(let i=1;i<L.length;i++){
+    const f=splitLine(L[i]);
+    const lat=parseFloat(f[iLat]),lon=parseFloat(f[iLon]),hdg=parseFloat(f[iHdg]);
+    if(!isFinite(lat)||!isFinite(lon)||!isFinite(hdg)) continue;
+    out.push({lat,lon,hdg,
+      dt:iDt>=0?(f[iDt]||""):"",
+      type:iType>=0?(f[iType]||"").toUpperCase():"TRUE",
+      note:(iNote>=0&&f[iNote])?f[iNote]:""});
+  }
+  return out;
+}
+
+/* --- solve --- */
+const SIG_T = 1.5*Math.PI/180;   // assumed bearing accuracy
+const SIG_P = 1.5;               // assumed spotter position accuracy, metres
+
+function solve(obs){
+  if(obs.length<2) return {err:"Only one observation — need at least two."};
+  // group observations into spotter positions by proximity
+  const posts=[];
+  for(const o of obs){
+    let p=posts.find(p=>{const d=toENU(o.lat,o.lon,p.lat,p.lon);return Math.hypot(d.e,d.n)<30;});
+    if(!p){p={lat:o.lat,lon:o.lon,ms:[]};posts.push(p);}
+    p.ms.push(o);
+    p.lat=p.ms.reduce((a,m)=>a+m.lat,0)/p.ms.length;
+    p.lon=p.ms.reduce((a,m)=>a+m.lon,0)/p.ms.length;
+  }
+  posts.forEach((p,i)=>{p.id=String.fromCharCode(65+i);p.ms.forEach(m=>m.post=p);});
+  if(posts.length<2) return {err:"All observations came from the same spot — the two spotters need to be at least 30 m apart."};
+
+  const lat0=obs.reduce((a,o)=>a+o.post.lat,0)/obs.length;
+  const lon0=obs.reduce((a,o)=>a+o.post.lon,0)/obs.length;
+  const L=obs.map(o=>{
+    const p=toENU(o.post.lat,o.post.lon,lat0,lon0);
+    const th=o.hdg*Math.PI/180;
+    return{o,p,th,n:[Math.cos(th),-Math.sin(th)],u:[Math.sin(th),Math.cos(th)]};});
+
+  let x=[0,0],cov=null,r=L.map(()=>200);
+  for(let it=0;it<8;it++){
+    let a=0,b=0,d=0,v0=0,v1=0;
+    L.forEach((l,i)=>{
+      const s2=Math.pow(r[i]*SIG_T,2)+SIG_P*SIG_P;
+      const c=l.n[0]*l.p.e+l.n[1]*l.p.n;
+      a+=l.n[0]*l.n[0]/s2; b+=l.n[0]*l.n[1]/s2; d+=l.n[1]*l.n[1]/s2;
+      v0+=l.n[0]*c/s2; v1+=l.n[1]*c/s2;});
+    const det=a*d-b*b;
+    if(!isFinite(det)||Math.abs(det)<1e-14)
+      return {err:"The sight lines are almost parallel — they don't cross anywhere useful."};
+    cov=[[d/det,-b/det],[-b/det,a/det]];
+    x=[cov[0][0]*v0+cov[0][1]*v1,cov[1][0]*v0+cov[1][1]*v1];
+    r=L.map(l=>Math.max(5,Math.hypot(x[0]-l.p.e,x[1]-l.p.n)));
+  }
+  const a=cov[0][0],b=cov[0][1],d=cov[1][1],tr=a+d,dt=a*d-b*b;
+  const disc=Math.max(0,tr*tr/4-dt);
+  const l1=tr/2+Math.sqrt(disc);
+  const radius=Math.sqrt(l1)*2.4477;
+
+  // widest angle between any two sight lines
+  let cross=0;
+  for(let i=0;i<L.length;i++)for(let j=i+1;j<L.length;j++){
+    let d2=Math.abs(L[i].o.hdg-L[j].o.hdg)%360; if(d2>180)d2=360-d2;
+    cross=Math.max(cross,Math.min(d2,180-d2));}
+
+  const ll=toLL(x[0],x[1],lat0,lon0);
+  return{lat:ll.lat,lon:ll.lon,lat0,lon0,x,radius,cross,posts,
+    lines:L.map((l,i)=>({p:l.p,u:l.u,range:r[i],id:l.o.post.id}))};
+}
+
+/* --- render --- */
+const f1=(v,n=0)=>isFinite(v)?v.toFixed(n):"—";
+
+function plot(R){
+  const W=560,H=420,PAD=30,pts=[{e:R.x[0],n:R.x[1]}];
+  R.lines.forEach(l=>{pts.push({e:l.p.e,n:l.p.n});
+    pts.push({e:l.p.e+l.u[0]*l.range*1.12,n:l.p.n+l.u[1]*l.range*1.12});});
+  const eMin=Math.min(...pts.map(p=>p.e)),eMax=Math.max(...pts.map(p=>p.e));
+  const nMin=Math.min(...pts.map(p=>p.n)),nMax=Math.max(...pts.map(p=>p.n));
+  const k=Math.min((W-2*PAD)/Math.max(eMax-eMin,1),(H-2*PAD)/Math.max(nMax-nMin,1));
+  const cx=(eMin+eMax)/2,cy=(nMin+nMax)/2;
+  const X=e=>W/2+(e-cx)*k, Y=n=>H/2-(n-cy)*k;
+  let s="",seen=new Set();
+  R.lines.forEach(l=>{
+    const x2=l.p.e+l.u[0]*l.range*1.12,y2=l.p.n+l.u[1]*l.range*1.12;
+    s+=`<line x1="${X(l.p.e).toFixed(1)}" y1="${Y(l.p.n).toFixed(1)}" x2="${X(x2).toFixed(1)}" y2="${Y(y2).toFixed(1)}" stroke="#2A6178" stroke-width="1.3" opacity=".75"/>`;
+    if(!seen.has(l.id)){seen.add(l.id);
+      s+=`<circle cx="${X(l.p.e).toFixed(1)}" cy="${Y(l.p.n).toFixed(1)}" r="5" fill="#2A6178"/>
+          <text x="${(X(l.p.e)+9).toFixed(1)}" y="${(Y(l.p.n)+4).toFixed(1)}" font-family="Helvetica,Arial,sans-serif" font-size="12" fill="#2A6178">${l.id}</text>`;}});
+  s+=`<circle cx="${X(R.x[0]).toFixed(1)}" cy="${Y(R.x[1]).toFixed(1)}" r="${Math.max(4,R.radius*k).toFixed(1)}" fill="#C0451B" fill-opacity=".15" stroke="#C0451B" stroke-width="1.3"/>
+      <circle cx="${X(R.x[0]).toFixed(1)}" cy="${Y(R.x[1]).toFixed(1)}" r="3.5" fill="#C0451B"/>`;
+  const raw=(eMax-eMin)/5,pw=Math.pow(10,Math.floor(Math.log10(raw)));
+  const step=[1,2,5,10].map(m=>m*pw).find(v=>v>=raw)||pw*10;
+  s+=`<line x1="${W-PAD-step*k}" y1="${H-16}" x2="${W-PAD}" y2="${H-16}" stroke="#17262C" stroke-width="1.5"/>
+      <text x="${W-PAD}" y="${H-22}" text-anchor="end" font-family="Helvetica,Arial,sans-serif" font-size="11" fill="#56686E">${step} m</text>`;
+  return `<svg class="plot" viewBox="0 0 ${W} ${H}" role="img" aria-label="Plan view of the spotters and where their sight lines cross">${s}</svg>`;
+}
+
+function kml(R,name){
+  const rays=R.lines.map(l=>{
+    const a=toLL(l.p.e,l.p.n,R.lat0,R.lon0);
+    const b=toLL(l.p.e+l.u[0]*l.range*1.12,l.p.n+l.u[1]*l.range*1.12,R.lat0,R.lon0);
+    return `<Placemark><name>Sight line ${l.id}</name><Style><LineStyle><color>ff0095ff</color><width>2</width></LineStyle></Style>
+<LineString><tessellate>1</tessellate><coordinates>${a.lon.toFixed(7)},${a.lat.toFixed(7)},0 ${b.lon.toFixed(7)},${b.lat.toFixed(7)},0</coordinates></LineString></Placemark>`;}).join("\n");
+  const posts=R.posts.map(p=>`<Placemark><name>Spotter ${p.id}</name><Point><coordinates>${p.lon.toFixed(7)},${p.lat.toFixed(7)},0</coordinates></Point></Placemark>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>${name}</name>
+<Placemark><name>FIX — walk here</name><description>${R.lat.toFixed(6)}, ${R.lon.toFixed(6)}</description>
+<Style><IconStyle><scale>1.3</scale><Icon><href>http://maps.google.com/mapfiles/kml/paddle/red-stars.png</href></Icon></IconStyle></Style>
+<Point><coordinates>${R.lon.toFixed(7)},${R.lat.toFixed(7)},0</coordinates></Point></Placemark>
+${posts}
+${rays}
+</Document></kml>`;
+}
+
+function download(text,name,type){
+  const b=new Blob([text],{type});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(b); a.download=name;
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},0);
+}
+
+let ALL=[], SEEN=new Set(), FILES=[];
+const keyOf=o=>`${o.dt}|${o.lat.toFixed(6)}|${o.lon.toFixed(6)}|${o.hdg}`;
+
+function render(){
+  const groups=new Map();
+  for(const o of ALL){const k=o.note||"(all observations)";
+    if(!groups.has(k))groups.set(k,[]);groups.get(k).push(o);}
+  const out=$("out"); out.innerHTML="";
+
+  for(const [name,obs] of [...groups].sort((a,b)=>a[0].localeCompare(b[0]))){
+    const R=solve(obs);
+    const card=document.createElement("div");
+    card.className="card";
+    if(R.err){
+      card.innerHTML=`<h2>${name}</h2><div class="facts">${R.err}</div>`;
+      out.appendChild(card); continue;
+    }
+    let warn="";
+    if(R.cross<15) warn=`<div class="warn">The sight lines only cross at ${f1(R.cross)}°, so this fix is stretched out along the line of sight. The two spotters were too close together for how far away the target was.</div>`;
+    const ranges=R.posts.map(p=>{
+      const l=R.lines.find(l=>l.id===p.id);
+      return `<span>Spotter ${p.id}: ${f1(l.range)} m</span>`;}).join("");
+
+    card.innerHTML=`<h2>${name}</h2>
+      <div class="coord">${R.lat.toFixed(6)}, ${R.lon.toFixed(6)}</div>
+      <div class="facts">${ranges}<span>lines cross at ${f1(R.cross)}°</span><span>search radius ≈ ${f1(R.radius)} m</span></div>
+      ${warn}
+      <div class="acts">
+        <button type="button" data-act="copy">Copy coordinates</button>
+        <button type="button" data-act="kml">Download KML</button>
+      </div>
+      ${plot(R)}
+      <details><summary>${obs.length} observation${obs.length===1?"":"s"} used</summary>
+        <table><thead><tr><th>Spotter</th><th>Time</th><th>Bearing</th></tr></thead><tbody>
+        ${obs.map(o=>`<tr><td>${o.post?o.post.id:"?"}</td><td>${(o.dt||"").replace(/^\d{4}\./,"")}</td><td>${o.hdg.toFixed(0)}°</td></tr>`).join("")}
+        </tbody></table></details>`;
+
+    card.querySelector('[data-act="copy"]').onclick=e=>{
+      navigator.clipboard.writeText(`${R.lat.toFixed(6)}, ${R.lon.toFixed(6)}`)
+        .then(()=>{e.target.textContent="Copied";setTimeout(()=>e.target.textContent="Copy coordinates",1400);});};
+    card.querySelector('[data-act="kml"]').onclick=()=>
+      download(kml(R,name),`fix-${name.replace(/[^\w.-]+/g,"_")}.kml`,"application/vnd.google-earth.kml+xml");
+
+    out.appendChild(card);
+  }
+}
+
+function ingest(text,fname){
+  const rows=parse(text);
+  const m=$("msg");
+  if(!rows.length){
+    m.className="msg bad";
+    m.textContent=`${fname} doesn't look like a Theodolite log — no LAT_DEG / LON_DEG / HDG_DEG columns found.`;
+    return;
+  }
+  let added=0,dupes=0;
+  for(const r of rows){const k=keyOf(r);
+    if(SEEN.has(k)){dupes++;continue;}
+    SEEN.add(k); ALL.push(r); added++;}
+  if(!FILES.includes(fname)) FILES.push(fname);
+  const rel=ALL.filter(o=>o.type&&o.type!=="TRUE").length;
+  m.className="msg";
+  m.textContent=`${fname}: ${added} new observation${added===1?"":"s"}`
+    +(dupes?`, ${dupes} already loaded`:"")
+    +`. ${ALL.length} total from ${FILES.length} file${FILES.length===1?"":"s"}.`
+    +(rel?` Warning: ${rel} are not TRUE headings — ZERO or magnetic mode was switched on and those bearings won't be right.`:"");
+  $("topacts").style.display="flex";
+  render();
+}
+
+$("clear").onclick=()=>{ALL=[];SEEN=new Set();FILES=[];$("out").innerHTML="";
+  $("msg").textContent="";$("msg").className="msg";$("topacts").style.display="none";};
+
+$("pick").onclick=()=>$("file").click();
+$("file").onchange=e=>{for(const f of e.target.files) f.text().then(t=>ingest(t,f.name)); e.target.value="";};
+const d=$("drop");
+["dragenter","dragover"].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.add("hot");}));
+["dragleave","drop"].forEach(ev=>d.addEventListener(ev,e=>{e.preventDefault();d.classList.remove("hot");}));
+d.addEventListener("drop",e=>{for(const f of e.dataTransfer.files) f.text().then(t=>ingest(t,f.name));});
+</script>
+</body>
+</html>

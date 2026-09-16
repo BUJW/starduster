@@ -1,0 +1,43 @@
+Idea for finding rockets when the azimuth is gone
+
+Most of the time when we lose one it isn't because nobody saw it. Several people
+watched it come down and can point right at it. But a bearing only exists from
+where you were standing. Walk around a treeline or down into a draw and back up,
+and the line is gone.
+
+I've been playing with an app called Theodolite (iOS) that overlays true bearing
+and lat/lon on the camera view and logs both with one button press. The idea:
+two people standing 100-150 m apart each put the crosshair on the landing and
+press LOG. Cross the two bearings, get a coordinate, hand-jam it into a handheld
+and walk to it. No line of sight needed once you have the number.
+
+I tried it this week on campus using a building spire as a stand-in target - two
+positions about 150 m apart, target a few hundred meters out, roughly the
+geometry we'd have at the field. Crossed the two bearings and the fix landed
+essentially on the spire. Small sample, but encouraging enough that I wanted to
+ask about trying it for real.
+
+The thing that seems to matter most is spreading the two spotters out so they
+straddle the landing area, rather than both standing on the flight line. If the
+two sight lines come in at a shallow angle the intersection gets sloppy.
+
+What I'd like to try: a few flights with a rocket carrying a tracker we already
+trust, so we can compare the two-spotter fix against the tracker's readout and
+against a GPS reading taken standing at the rocket. If those agree we've got
+something. If they don't, I'd rather find out now.
+
+That would take a flier putting up a tracked rocket who doesn't mind us running
+the spotters on it, and two people willing to stand at fixed spots and not chase.
+
+To be up front: this isn't a replacement for a tracker. If you've got one, use
+it. I'm thinking about the untracked flights, and particularly the ones where the
+rocket drops behind trees or over a fence line and whoever saw it has to cover a
+quarter mile of terrain to get there.
+
+I've got a rough calculator that takes the two log files and spits out a
+coordinate plus a KML you can open in Google Earth. Glad to share it, or to walk
+anyone through the app setup, if there's interest.
+
+Screenshots and the Google Earth view of the test are here: [link]
+
+Josh / W3ARD

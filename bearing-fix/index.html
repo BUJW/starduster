@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two-spotter visual fix for rocket recovery</title>
+<style>
+  :root {
+    --paper:#E6E9E7; --panel:#F3F5F3; --ink:#17262C; --soft:#56686E;
+    --rule:#B6C1C1; --post:#2A6178; --fix:#C0451B;
+    --serif:Georgia,"Iowan Old Style","Times New Roman",serif;
+    --sans:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);font-size:17px;line-height:1.62}
+  .wrap{max-width:820px;margin:0 auto;padding:48px 22px 90px}
+  p{max-width:68ch}
+
+  h1{font-weight:400;font-size:clamp(30px,6vw,42px);line-height:1.08;letter-spacing:-.018em;margin:0 0 12px}
+  .sub{font-family:var(--sans);font-size:15px;color:var(--soft);margin:0 0 26px}
+  h2{font-weight:400;font-size:24px;letter-spacing:-.01em;margin:52px 0 16px;padding-bottom:9px;border-bottom:1px solid var(--rule)}
+  h3{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--soft);margin:34px 0 10px}
+
+  .cta{display:inline-block;font-family:var(--sans);font-size:15px;font-weight:500;
+       background:var(--ink);color:var(--panel);text-decoration:none;padding:12px 22px;margin-bottom:8px}
+  .cta:hover{background:#223A42}
+  .cta:focus-visible{outline:2px solid var(--fix);outline-offset:3px}
+  .ctanote{font-family:var(--sans);font-size:13px;color:var(--soft);margin:8px 0 0}
+
+  figure{margin:30px 0}
+  figure a{display:block}
+  figure img{width:100%;height:auto;display:block;border:1px solid var(--rule);background:var(--panel)}
+  figcaption{font-family:var(--sans);font-size:13px;color:var(--soft);margin-top:8px;max-width:68ch}
+
+  table{border-collapse:collapse;font-family:var(--sans);font-size:14.5px;
+        font-variant-numeric:tabular-nums;margin:22px 0;width:100%;max-width:560px}
+  th,td{text-align:left;padding:7px 16px 7px 0;border-bottom:1px solid var(--rule)}
+  th{font-weight:600;font-size:12.5px;color:var(--soft)}
+  td.n{text-align:right;padding-right:0}
+
+  ul{max-width:68ch}
+  li{margin-bottom:7px}
+  code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.88em;background:var(--panel);padding:1px 5px;border:1px solid var(--rule)}
+  a{color:var(--post)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>Two-spotter visual fix for rocket recovery</h1>
+<p class="sub">Triangulating a landing point from two bearings. Josh / W3ARD</p>
+
+<a class="cta" href="calculator.html">Open the calculator</a>
+<p class="ctanote">Drop in two Theodolite log files, get a coordinate. Runs entirely in your browser.</p>
+
+<p>A visual bearing is only valid from the position it was taken. Cross any
+terrain on the way to recovery and there's no way to re-establish it.</p>
+
+<p>Two spotters at known positions, each recording a bearing to the same landing,
+define an intersection. That intersection is a coordinate you can enter into a
+handheld and navigate to without line of sight.</p>
+
+<h2>Method</h2>
+
+<p>Two spotters stand 100–150 m apart. On landing, each puts the crosshair of the
+<a href="https://hunter.pairsite.com/theodolite/">Theodolite</a> app on the spot
+and presses LOG, which records position, true bearing, and time. Both logs go to
+whoever is running the calculator, and the intersection comes back as a
+coordinate.</p>
+
+<h2>Field test, 16 September 2026</h2>
+
+<p>Two positions 152 m apart on the Baylor campus, both sighting a building
+cupola about 350 m away. Bearings were 061° and 036° true, crossing at 25°.</p>
+
+<figure>
+  <a href="01-test-oblique.png"><img src="01-test-oblique.png" alt="Oblique aerial view showing two spotter positions and their bearing lines converging on a building"></a>
+  <figcaption>Both sight lines drawn from the spotter positions.</figcaption>
+</figure>
+
+<figure>
+  <a href="02-test-plan.png"><img src="02-test-plan.png" alt="Overhead map view of the two sight lines and the computed fix"></a>
+  <figcaption>Plan view. The red line along the bottom is the 152 m baseline.</figcaption>
+</figure>
+
+<figure>
+  <a href="03-test-nadir.png"><img src="03-test-nadir.png" alt="Close overhead view showing the computed fix marker on the building cupola"></a>
+  <figcaption>The computed fix, overhead. The marker is clamped to ground while the cupola is about 25 m up, which accounts for the apparent offset in the oblique views.</figcaption>
+</figure>
+
+<table>
+  <tr><th>Spotter A → fix</th><td class="n">347 m</td></tr>
+  <tr><th>Spotter B → fix</th><td class="n">352 m</td></tr>
+  <tr><th>Spotter A ↔ Spotter B</th><td class="n">152 m</td></tr>
+  <tr><th>Crossing angle</th><td class="n">25°</td></tr>
+  <tr><th>Computed fix</th><td class="n">31.548139, −97.112414</td></tr>
+</table>
+
+<h3>Occlusion</h3>
+
+<p>The target was clear from one end of the baseline and behind a tree from the
+other. The fix does not require both spotters to have an unobstructed view at the
+same instant.</p>
+
+<figure>
+  <a href="05-spire-visible.png"><img src="05-spire-visible.png" alt="Street level view with the building spire visible above the treeline"></a>
+  <figcaption>Clear from Spotter A.</figcaption>
+</figure>
+
+<figure>
+  <a href="06-spire-occluded.png"><img src="06-spire-occluded.png" alt="Street level view from the other position with the spire hidden behind a tree"></a>
+  <figcaption>Obstructed from Spotter B.</figcaption>
+</figure>
+
+<figure>
+  <a href="04-baseline-streetview.png"><img src="04-baseline-streetview.png" alt="Street level view along the baseline between the two spotter positions"></a>
+  <figcaption>The baseline, looking along S 3rd St.</figcaption>
+</figure>
+
+<h3>Source observations</h3>
+
+<table>
+  <tr><th>Spotter</th><th>Time</th><th>Position</th><th>Bearing</th></tr>
+  <tr><td>A</td><td>13:29:28</td><td>31.545604, −97.114565</td><td>036° TRUE</td></tr>
+  <tr><td>B</td><td>13:27:45</td><td>31.546598, −97.115661</td><td>061° TRUE</td></tr>
+</table>
+
+<figure>
+  <a href="10-spotter-a-view.jpeg"><img src="10-spotter-a-view.jpeg" alt="Theodolite viewfinder from Spotter A showing bearing 036 degrees true"></a>
+  <figcaption>Spotter A. Position, altitude, and true bearing are all on screen and all written to the log.</figcaption>
+</figure>
+
+<figure>
+  <a href="11-spotter-b-view.jpeg"><img src="11-spotter-b-view.jpeg" alt="Theodolite viewfinder from Spotter B showing bearing 061 degrees true"></a>
+  <figcaption>Spotter B.</figcaption>
+</figure>
+
+<p>Both observations are in
+<a href="sighting-2026-09-16.csv">sighting-2026-09-16.csv</a> if you want to load
+them into the calculator. There is also a
+<a href="bearing-fix-2026-09-16.kml">KML</a> of the spotter positions, sight
+lines, and fix for Google Earth.</p>
+
+<h2>Setup</h2>
+
+<p>Theodolite settings, both phones:</p>
+<ul>
+  <li>Coordinates in <strong>decimal degrees</strong> — not Maidenhead grid, not MGRS</li>
+  <li>Heading set to <strong>TRUE</strong></li>
+  <li><strong>ZERO mode off</strong>; it changes what gets written to the log</li>
+</ul>
+
+<p>Placement drives accuracy more than anything else. The two spotters should
+straddle the landing area on a line roughly perpendicular to the drift direction,
+not both stand on the flight line. Shallow crossing angles produce a fix stretched
+along the line of sight.</p>
+
+<p>Put the flight card number in the app's note field. Logs are cumulative, so
+that is what separates one flight's observations from the next.</p>
+
+<h2>Why</h2>
+
+<figure>
+  <a href="21-recovery-field.jpeg"><img src="21-recovery-field.jpeg" alt="Two recovered rockets lying in tall dry grass"></a>
+  <figcaption>Two rockets in waist-high grass. Not visible from fifteen yards, and both landed in open view of everyone watching.</figcaption>
+</figure>
+
+<figure>
+  <a href="20-recovery-theodolite.jpg"><img src="20-recovery-theodolite.jpg" alt="Theodolite viewfinder pointed at a recovered rocket and parachute in grass near a treeline"></a>
+  <figcaption>This one cleared the treeline by a few yards. It was only found because I happened to be on the far side of the grove.</figcaption>
+</figure>
+
+<h2>What's next</h2>
+
+<p>I'd like to fly a rocket carrying a tracker we already trust and compare three
+things per flight: the two-spotter fix, the tracker's final reported position, and
+a GPS reading taken standing at the rocket. The last one matters — a tracker's
+last transmission and the rocket's resting place are not always the same, and
+without the walk-up reading there is no way to tell which is wrong.</p>
+
+<p>This does not replace a tracker. If you have one, use it. This is for the
+untracked flights.</p>
+
+</div>
+</body>
+</html>
