@@ -1,0 +1,20 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<kml xmlns='http://www.opengis.net/kml/2.2'>
+<Document>
+<Placemark>
+<name>Theodolite Export 2026.09.16_15.38.10</name>
+<Point>
+<coordinates>-97.116028,31.546600,120.373886</coordinates>
+</Point>
+<Camera>
+<longitude>-97.116028</longitude>
+<latitude>31.546600</latitude>
+<altitude>120.373886</altitude>
+<heading>64.385605</heading>
+<tilt>91.122192</tilt>
+<roll>0.490448</roll>
+<altitudeMode>absolute</altitudeMode>
+</Camera>
+</Placemark>
+</Document>
+</kml>

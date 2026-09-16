@@ -16,8 +16,9 @@ handheld and navigate to without line of sight.
 
 Two spotters stand 100-150 m apart. On landing, each puts the crosshair of the
 [Theodolite](https://hunter.pairsite.com/theodolite/) app on the spot and presses
-LOG, which records position, true bearing, and time. Both logs go to whoever is
-running the calculator, and the intersection comes back as a coordinate.
+MAIL. The app sends a KML holding the phone's position and the bearing it was
+pointed, at full precision. Both files go to whoever is running the calculator,
+and the intersection comes back as a coordinate.
 
 ## Field test, 16 September 2026
 
@@ -73,7 +74,7 @@ A single self-contained page — drop in the Theodolite CSV logs and it returns 
 intersection, an error ellipse, and a KML for Google Earth. No server, nothing
 uploaded, works offline once loaded.
 
-To reproduce the test above, load `sighting-2026-09-16.csv`.
+To try it, load `sighting-a-2026-09-16.kml` and `sighting-b-2026-09-16.kml`.
 
 ## Setup
 
@@ -88,8 +89,9 @@ straddle the landing area on a line roughly perpendicular to the drift direction
 not both stand on the flight line. Shallow crossing angles produce a fix stretched
 along the line of sight.
 
-Put the flight card number in the app's note field. Logs are cumulative, so that
-is what separates one flight's observations from the next.
+MAIL sends one observation per message, so there is nothing to untangle at the
+other end. If you use the cumulative CSV log instead, put the flight card number
+in the app's note field.
 
 ## Why
 
@@ -119,7 +121,9 @@ untracked flights.
 ```
 index.html                       illustrated writeup (the Pages landing page)
 calculator.html                  the calculator
-sighting-2026-09-16.csv          the two observations above
+sighting-a-2026-09-16.kml        a mailed observation, ready to load
+sighting-b-2026-09-16.kml        the matching one from the other spotter
+sighting-2026-09-16.csv          the earlier pair, in CSV form
 bearing-fix-2026-09-16.kml       spotter positions, sight lines, and fix for Google Earth
 proposal.txt                     short writeup for the club message board
 *.png / *.jpeg                   screenshots
